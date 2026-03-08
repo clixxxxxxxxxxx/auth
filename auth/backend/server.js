@@ -16,7 +16,7 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: '*', // Restrict to your domain in production
+origin: ['https://dapper-tarsier-0a75ee.netlify.app'],
   methods: ['GET', 'POST', 'DELETE'],
 }));
 
