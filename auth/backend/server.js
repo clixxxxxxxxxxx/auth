@@ -178,6 +178,7 @@ app.post('/api/validate', authLimiter, (req, res) => {
 
   const db = loadDB();
   const license = db.licenses[key];
+  console.log('Looking for key:', JSON.stringify(key), 'Found:', !!license, 'DB keys:', Object.keys(db.licenses).slice(0, 3));
 
   if (!license) return res.json({ success: false, message: 'Invalid license.' });
   if (db.blacklist.includes(key)) return res.json({ success: false, message: 'License banned.' });
