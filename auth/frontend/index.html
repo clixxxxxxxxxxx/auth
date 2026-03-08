@@ -256,16 +256,18 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="panel" id="create-app-panel" style="display:none">
         <div class="panel-header">Create New Application</div>
         <div class="panel-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
             <div class="field"><label>Application Name</label><input type="text" id="new-app-name" placeholder="e.g. MyCheatApp"/></div>
             <div class="field"><label>Version</label><input type="text" id="new-app-version" placeholder="1.0.0"/></div>
+            <div class="field"><label>Min Version (version gate)</label><input type="text" id="new-app-minver" placeholder="e.g. 1.2.0 — blocks older"/></div>
+            <div class="field"><label>Max Failed Auth Attempts (0 = off)</label><input type="number" id="new-app-maxattempts" value="0" min="0"/></div>
+            <div class="field" style="grid-column:2/-1"><label>Discord Webhook URL (optional)</label><input type="text" id="new-app-webhook" placeholder="https://discord.com/api/webhooks/..."/></div>
             <div class="field" style="grid-column:1/-1"><label>Description (optional)</label><input type="text" id="new-app-desc" placeholder="What this application does"/></div>
           </div>
           <div style="display:flex;gap:8px;margin-top:4px">
             <button class="btn btn-primary" onclick="createApp()">Create Application</button>
             <button class="btn btn-ghost" onclick="hideCreateApp()">Cancel</button>
           </div>
-          <!-- New app credentials shown here -->
           <div id="new-app-result" style="display:none"></div>
         </div>
       </div>
@@ -287,11 +289,20 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="panel">
         <div class="panel-body" style="padding-bottom:0">
           <div class="search-bar"><input type="text" id="search-input" placeholder="Search key, username, HWID, IP, app..." oninput="filterLicenses()"/></div>
+          <div id="bulk-toolbar" style="display:none;align-items:center;gap:8px;margin-bottom:12px;padding:10px 14px;background:rgba(124,106,247,0.08);border:1px solid rgba(124,106,247,0.2);border-radius:10px;">
+            <span id="bulk-count" style="font-size:12px;font-weight:700;color:var(--accent);margin-right:4px">0 selected</span>
+            <button class="btn btn-ghost btn-sm" onclick="bulkAction('reset')">Reset Machines</button>
+            <button class="btn btn-warn btn-sm" onclick="bulkAction('ban')">Ban</button>
+            <button class="btn btn-success btn-sm" onclick="bulkAction('unban')">Unban</button>
+            <button class="btn btn-ghost btn-sm" onclick="bulkAction('resetfails')">Reset Fail Count</button>
+            <button class="btn btn-danger btn-sm" onclick="bulkAction('delete')">Delete</button>
+            <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="clearSelection()">✕ Clear</button>
+          </div>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>License Key</th><th>App</th><th>Plan</th><th>Status</th><th>Username</th><th>HWID</th><th>Last IP</th><th>Expires</th><th>Last Seen</th><th>Actions</th></tr></thead>
-            <tbody id="licenses-tbody"><tr><td colspan="10" class="empty-state">Loading...</td></tr></tbody>
+            <thead><tr><th><input type="checkbox" id="select-all" onchange="toggleSelectAll(this)" style="cursor:pointer"/></th><th>License Key</th><th>App</th><th>Plan</th><th>Status</th><th>Username</th><th>HWID</th><th>Last IP</th><th>Expires</th><th>Last Seen</th><th>Actions</th></tr></thead>
+            <tbody id="licenses-tbody"><tr><td colspan="11" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -535,13 +546,14 @@ async function loadLicenses() {
 
 function renderLicenses(list) {
   const tbody = document.getElementById('licenses-tbody');
-  if (!list.length) { tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="icon">🗝</div>No licenses found</div></td></tr>'; return; }
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="11"><div class="empty-state"><div class="icon">🗝</div>No licenses found</div></td></tr>'; return; }
   tbody.innerHTML = list.map(l=>`
     <tr>
+      <td><input type="checkbox" class="row-check" data-key="${l.key}" onchange="updateBulkToolbar()" style="cursor:pointer"/></td>
       <td class="key-cell" onclick="showDetail('${l.key}')">${l.key}</td>
       <td>${appBadge(l)}</td>
       <td><span class="badge badge-plan">${l.plan}</span></td>
-      <td>${statusBadge(l)}</td>
+      <td>${statusBadge(l)}${l.failCount>0?` <span style="font-size:9px;color:var(--danger);font-family:var(--mono)">${l.failCount}✗</span>`:''}</td>
       <td>${l.username||'<span style="color:var(--muted)">—</span>'}</td>
       <td>${hwidCell(l)}</td>
       <td>${ipCell(l.lastIP)}</td>
@@ -599,16 +611,25 @@ function renderApps(list) {
         <span class="badge ${a.disabled?'badge-disabled':'badge-active'}">${a.disabled?'Disabled':'Active'}</span>
       </div>
       ${a.description?`<div class="app-card-desc">${a.description}</div>`:''}
-      <div class="cred-row">
-        <span class="cred-label">App ID</span>
-        <span class="cred-val" onclick="copyText('${a.id}')" title="Click to copy">${a.id}</span>
-      </div>
-      <div class="cred-row">
-        <span class="cred-label">Secret</span>
-        <span class="cred-val" onclick="copyText('${a.secret}')" title="Click to copy">${a.secret}</span>
+      <div class="cred-row"><span class="cred-label">App ID</span><span class="cred-val" onclick="copyText('${a.id}')" title="Click to copy">${a.id}</span></div>
+      <div class="cred-row"><span class="cred-label">Secret</span><span class="cred-val" onclick="copyText('${a.secret}')" title="Click to copy">${a.secret}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0;padding:10px;background:var(--bg);border-radius:8px;">
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Min Version</div>
+          <div style="font-size:12px;font-family:var(--mono);color:${a.minVersion?'var(--warn)':'var(--muted)'}">${a.minVersion||'—'}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Max Attempts</div>
+          <div style="font-size:12px;font-family:var(--mono);color:${a.maxAuthAttempts?'var(--danger)':'var(--muted)'}">${a.maxAuthAttempts||'Off'}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Discord</div>
+          <div style="font-size:12px;color:${a.discordWebhook?'var(--success)':'var(--muted)'}">${a.discordWebhook?'✓ Set':'—'}</div>
+        </div>
       </div>
       <div class="app-card-footer">
-        <button class="btn btn-ghost btn-sm" onclick="regenSecret('${a.id}')">↺ Regen Secret</button>
+        <button class="btn btn-ghost btn-sm" onclick="showEditApp('${a.id}')">⚙ Settings</button>
+        <button class="btn btn-ghost btn-sm" onclick="regenSecret('${a.id}')">↺ Regen</button>
         <button class="btn ${a.disabled?'btn-success':'btn-warn'} btn-sm" onclick="toggleApp('${a.id}')">${a.disabled?'Enable':'Disable'}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteApp('${a.id}')">Delete</button>
       </div>
@@ -624,15 +645,17 @@ function hideCreateApp() {
 }
 
 async function createApp() {
-  const name    = document.getElementById('new-app-name').value.trim();
-  const version = document.getElementById('new-app-version').value.trim() || '1.0.0';
-  const desc    = document.getElementById('new-app-desc').value.trim();
+  const name        = document.getElementById('new-app-name').value.trim();
+  const version     = document.getElementById('new-app-version').value.trim() || '1.0.0';
+  const desc        = document.getElementById('new-app-desc').value.trim();
+  const minVersion  = document.getElementById('new-app-minver').value.trim();
+  const maxAttempts = parseInt(document.getElementById('new-app-maxattempts').value) || 0;
+  const webhook     = document.getElementById('new-app-webhook').value.trim();
   if (!name) { toast('Enter an application name','error'); return; }
 
-  const d = await api('POST','/api/admin/apps/create',{name,version,description:desc});
+  const d = await api('POST','/api/admin/apps/create',{name,version,description:desc,minVersion,maxAuthAttempts:maxAttempts,discordWebhook:webhook});
   if (!d.success) { toast(d.message,'error'); return; }
 
-  // Show credentials immediately — user needs to save these
   const el = document.getElementById('new-app-result');
   el.style.display = 'block';
   el.innerHTML = `
@@ -640,12 +663,15 @@ async function createApp() {
       <div class="new-app-success-title">✓ Application created — save these credentials now!</div>
       <div class="cred-row"><span class="cred-label">App ID</span><span class="cred-val" onclick="copyText('${d.appId}')" title="Click to copy">${d.appId}</span></div>
       <div class="cred-row"><span class="cred-label">Secret</span><span class="cred-val" onclick="copyText('${d.secret}')" title="Click to copy">${d.secret}</span></div>
-      <p style="font-size:11px;color:var(--muted);margin-top:12px">Use these in your C++ app with <code style="color:var(--accent2)">VaultAuth::setAppId()</code> and <code style="color:var(--accent2)">VaultAuth::setAppSecret()</code>.</p>
+      <p style="font-size:11px;color:var(--muted);margin-top:12px">Use <code style="color:var(--accent2)">VaultAuth::setAppId()</code> and <code style="color:var(--accent2)">VaultAuth::setAppSecret()</code> in your C++ app.</p>
     </div>`;
 
   document.getElementById('new-app-name').value='';
   document.getElementById('new-app-version').value='';
   document.getElementById('new-app-desc').value='';
+  document.getElementById('new-app-minver').value='';
+  document.getElementById('new-app-maxattempts').value='0';
+  document.getElementById('new-app-webhook').value='';
   toast(`App "${name}" created!`,'success');
   loadApps();
 }
@@ -781,6 +807,85 @@ async function loadBanLists(){
 
 // ── UTILS ─────────────────────────────────────
 function copyText(txt){navigator.clipboard.writeText(txt).then(()=>toast('Copied!','info'));}
+// ── BULK ACTIONS ──────────────────────────────
+function getSelectedKeys() {
+  return [...document.querySelectorAll('.row-check:checked')].map(el=>el.dataset.key);
+}
+
+function updateBulkToolbar() {
+  const keys = getSelectedKeys();
+  const toolbar = document.getElementById('bulk-toolbar');
+  toolbar.style.display = keys.length > 0 ? 'flex' : 'none';
+  document.getElementById('bulk-count').textContent = `${keys.length} selected`;
+}
+
+function toggleSelectAll(cb) {
+  document.querySelectorAll('.row-check').forEach(el => { el.checked = cb.checked; });
+  updateBulkToolbar();
+}
+
+function clearSelection() {
+  document.querySelectorAll('.row-check').forEach(el => el.checked = false);
+  const sa = document.getElementById('select-all');
+  if (sa) sa.checked = false;
+  updateBulkToolbar();
+}
+
+async function bulkAction(action) {
+  const keys = getSelectedKeys();
+  if (!keys.length) { toast('No keys selected','error'); return; }
+  const labels = { ban:'Ban', unban:'Unban', delete:'Delete', reset:'Reset machines for', resetfails:'Reset fail counts for' };
+  if (!confirm(`${labels[action]} ${keys.length} key(s)?`)) return;
+  const d = await api('POST','/api/admin/bulk',{keys,action});
+  toast(d.message, d.success?'success':'error');
+  clearSelection();
+  loadLicenses();
+  loadStats();
+}
+
+// ── EDIT APP MODAL ────────────────────────────
+function showEditApp(id) {
+  const a = allApps.find(x=>x.id===id);
+  if (!a) return;
+  document.getElementById('modal-title').textContent = `Settings — ${a.name}`;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Version</label><input type="text" id="edit-version" value="${a.version||''}"/></div>
+      <div class="field"><label>Min Version (version gate)</label><input type="text" id="edit-minver" value="${a.minVersion||''}" placeholder="e.g. 1.2.0"/></div>
+      <div class="field"><label>Max Auth Attempts (0 = off)</label><input type="number" id="edit-maxattempts" value="${a.maxAuthAttempts||0}" min="0"/></div>
+      <div class="field"><label>Description</label><input type="text" id="edit-desc" value="${a.description||''}"/></div>
+      <div class="field" style="grid-column:1/-1">
+        <label>Discord Webhook URL</label>
+        <div style="display:flex;gap:8px">
+          <input type="text" id="edit-webhook" value="${a.discordWebhook||''}" placeholder="https://discord.com/api/webhooks/..."/>
+          <button class="btn btn-ghost btn-sm" onclick="testWebhook(document.getElementById('edit-webhook').value)">Test</button>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('modal-actions').innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="saveEditApp('${id}')">Save Changes</button>
+    <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>`;
+  document.getElementById('detail-modal').classList.add('show');
+}
+
+async function saveEditApp(id) {
+  const d = await api('POST',`/api/admin/apps/update/${id}`,{
+    version:         document.getElementById('edit-version').value.trim(),
+    minVersion:      document.getElementById('edit-minver').value.trim(),
+    maxAuthAttempts: parseInt(document.getElementById('edit-maxattempts').value)||0,
+    description:     document.getElementById('edit-desc').value.trim(),
+    discordWebhook:  document.getElementById('edit-webhook').value.trim(),
+  });
+  toast(d.message, d.success?'success':'error');
+  if (d.success) { closeModal(); loadApps(); }
+}
+
+async function testWebhook(url) {
+  if (!url) { toast('Enter a webhook URL first','error'); return; }
+  const d = await api('POST','/api/admin/discord/test',{webhookUrl:url});
+  toast(d.message, d.success?'success':'error');
+}
+
 function copyRegisterUrl(){const url=document.getElementById('register-url-display').value;navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success'));}
 function toast(msg,type='info'){const t=document.getElementById('toast');const icons={success:'✓',error:'✕',info:'ℹ'};t.innerHTML=`<span>${icons[type]}</span> ${msg}`;t.className=`show ${type}`;setTimeout(()=>t.className='',3500);}
 
