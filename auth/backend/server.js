@@ -16,7 +16,7 @@ const path = require('path');
 const app = express();
 app.use(express.json());
 app.use(cors({
-origin: ['https://dapper-tarsier-0a75ee.netlify.app'],
+  origin: '*', // Restrict to your domain in production
   methods: ['GET', 'POST', 'DELETE'],
 }));
 
@@ -105,9 +105,9 @@ const authLimiter = rateLimit({
  * Registers a key to a machine + username
  */
 app.post('/api/activate', authLimiter, (req, res) => {
-  const { key, username, appVersion } = req.body;
+  const { key, hwid, username, appVersion } = req.body;
 
-  if (!key || !username) {
+  if (!key || !hwid || !username) {
     return res.status(400).json({ success: false, message: 'Missing required fields.' });
   }
 
@@ -126,22 +126,39 @@ app.post('/api/activate', authLimiter, (req, res) => {
     return res.json({ success: false, message: 'License key has expired.' });
   }
 
+  const machineHash = getMachineHash(hwid);
+
+  // Already activated on this machine?
+  if (license.machineHash && license.machineHash !== machineHash) {
+    if (!license.allowMultiple) {
+      return res.json({
+        success: false,
+        message: 'License already activated on another machine. Contact support to reset.'
+      });
+    }
+  }
+
+  // Activate
+  license.machineHash = machineHash;
   license.username = username;
   license.activatedAt = license.activatedAt || nowISO();
   license.lastSeen = nowISO();
   license.appVersion = appVersion || 'unknown';
 
+  // Log activation
   if (!db.activations[key]) db.activations[key] = [];
   db.activations[key].push({
     event: 'activate',
     timestamp: nowISO(),
     username,
+    hwid: machineHash.slice(0, 12) + '...',
     appVersion
   });
 
   saveDB(db);
 
-  const sessionPayload = `${key}:${Date.now()}`;
+  // Build signed session token
+  const sessionPayload = `${key}:${machineHash}:${Date.now()}`;
   const token = hmacSign(sessionPayload);
 
   return res.json({
@@ -178,7 +195,6 @@ app.post('/api/validate', authLimiter, (req, res) => {
 
   const db = loadDB();
   const license = db.licenses[key];
-  console.log('Looking for key:', JSON.stringify(key), 'Found:', !!license, 'DB keys:', Object.keys(db.licenses).slice(0, 3));
 
   if (!license) return res.json({ success: false, message: 'Invalid license.' });
   if (db.blacklist.includes(key)) return res.json({ success: false, message: 'License banned.' });
@@ -354,7 +370,7 @@ app.get('/api/admin/stats', adminAuth, (req, res) => {
 });
 
 // Serve the dashboard
-//app.use(express.static(path.join(__dirname, '../frontend')));
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 app.listen(CONFIG.PORT, () => {
   console.log(`\n🔐 VaultAuth Server running on port ${CONFIG.PORT}`);
