@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Activate License — VaultAuth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #111118;
+    --border: #1e1e2e;
+    --accent: #7c6af7;
+    --accent2: #3ecfcf;
+    --danger: #f05d7a;
+    --success: #3ecf8e;
+    --text: #e8e8f0;
+    --muted: #5a5a7a;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      linear-gradient(rgba(124,106,247,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(124,106,247,0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+    pointer-events: none;
+  }
+
+  /* Glow blobs */
+  body::after {
+    content: '';
+    position: fixed;
+    top: -200px; left: -200px;
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(124,106,247,0.08) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 460px;
+    padding: 40px;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 240px; height: 240px;
+    background: radial-gradient(circle, rgba(62,207,207,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .logo-icon {
+    width: 46px; height: 46px;
+    background: linear-gradient(135deg, #7c6af7, #3ecfcf);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+
+  .logo-name { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo-name span { color: var(--accent); }
+
+  .headline { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .subline { font-size: 13px; color: var(--muted); margin-bottom: 32px; line-height: 1.6; }
+
+  /* Stepper */
+  .stepper {
+    display: flex; align-items: center; gap: 0;
+    margin-bottom: 32px;
+  }
+
+  .step {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    flex: 1;
+    position: relative;
+  }
+
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    top: 16px; left: 50%;
+    width: 100%; height: 1px;
+    background: var(--border);
+    z-index: 0;
+  }
+
+  .step.done::after { background: var(--accent); }
+
+  .step-dot {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    background: var(--surface);
+    position: relative; z-index: 1;
+    color: var(--muted);
+    transition: all 0.3s;
+  }
+
+  .step.active .step-dot {
+    border-color: var(--accent);
+    background: rgba(124,106,247,0.1);
+    color: var(--accent);
+  }
+
+  .step.done .step-dot {
+    border-color: var(--success);
+    background: var(--success);
+    color: #000;
+  }
+
+  .step-label { font-size: 10px; color: var(--muted); font-weight: 600; }
+  .step.active .step-label { color: var(--accent); }
+  .step.done .step-label { color: var(--success); }
+
+  /* Form */
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block;
+    font-size: 11px; font-weight: 700;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.5px;
+  }
+
+  input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(124,106,247,0.1);
+  }
+
+  input.error { border-color: var(--danger); }
+  input.success-input { border-color: var(--success); }
+
+  .hint { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  .btn {
+    width: 100%;
+    padding: 14px;
+    border-radius: 12px;
+    border: none;
+    font-family: 'Syne', sans-serif;
+    font-size: 14px; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+
+  .btn-primary:hover:not(:disabled) {
+    background: #6a59e0;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(124,106,247,0.3);
+  }
+
+  .btn-primary:disabled {
+    opacity: 0.5; cursor: not-allowed;
+  }
+
+  .status-msg {
+    padding: 14px 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  .status-msg.error { background: rgba(240,93,122,0.1); color: var(--danger); border: 1px solid rgba(240,93,122,0.2); }
+  .status-msg.success { background: rgba(62,207,142,0.1); color: var(--success); border: 1px solid rgba(62,207,142,0.2); }
+  .status-msg.info { background: rgba(124,106,247,0.1); color: var(--accent); border: 1px solid rgba(124,106,247,0.2); }
+
+  /* Success state */
+  .success-card {
+    display: none;
+    text-align: center;
+    padding: 20px 0;
+  }
+
+  .success-icon {
+    width: 80px; height: 80px;
+    background: rgba(62,207,142,0.1);
+    border: 2px solid var(--success);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 36px;
+    margin: 0 auto 24px;
+    animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes popIn {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .success-title { font-size: 22px; font-weight: 800; color: var(--success); margin-bottom: 8px; }
+  .success-sub { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  .info-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px; margin-top: 24px;
+  }
+
+  .info-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: left;
+  }
+
+  .info-item-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-weight: 700; margin-bottom: 4px; }
+  .info-item-value { font-size: 13px; font-family: 'DM Mono', monospace; color: var(--text); }
+
+  /* Config notice */
+  .config-notice {
+    background: rgba(245,166,35,0.08);
+    border: 1px solid rgba(245,166,35,0.2);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 11px;
+    color: #f5a623;
+    margin-bottom: 20px;
+    display: none;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .powered {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 24px;
+  }
+
+  .powered a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🔐</div>
+    <div class="logo-name">Vault<span>Auth</span></div>
+  </div>
+
+  <!-- CONFIG NOTICE (shown if URL not configured) -->
+  <div class="config-notice" id="config-notice">
+    ⚠ Set <strong>SERVER_URL</strong> in this file's script section before sharing with customers.
+  </div>
+
+  <div class="headline">Activate Your License</div>
+  <div class="subline">Enter your license key and choose a username to activate access on this machine.</div>
+
+  <!-- Stepper -->
+  <div class="stepper">
+    <div class="step active" id="step1">
+      <div class="step-dot">1</div>
+      <div class="step-label">Enter Key</div>
+    </div>
+    <div class="step" id="step2">
+      <div class="step-dot">2</div>
+      <div class="step-label">Activate</div>
+    </div>
+    <div class="step" id="step3">
+      <div class="step-dot">3</div>
+      <div class="step-label">Done</div>
+    </div>
+  </div>
+
+  <div id="status-msg" class="status-msg"></div>
+
+  <!-- FORM -->
+  <div id="form-section">
+    <div class="field">
+      <label>License Key</label>
+      <input type="text" id="key-input" placeholder="VAULT-XXXXXX-XXXXXX-XXXXXX"
+        oninput="formatKey(this)" autocomplete="off" spellcheck="false"/>
+      <div class="hint">Provided after purchase. Format: XXXX-XXXXXX-XXXXXX-XXXXXX</div>
+    </div>
+
+    <div class="field">
+      <label>Username</label>
+      <input type="text" id="username-input" placeholder="Choose a display name" autocomplete="off"/>
+      <div class="hint">This name will be shown in the application.</div>
+    </div>
+
+    <button class="btn btn-primary" id="activate-btn" onclick="doActivate()">
+      Activate License →
+    </button>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="success-card" id="success-card">
+    <div class="success-icon">✓</div>
+    <div class="success-title">Activated!</div>
+    <div class="success-sub">Your license has been successfully activated.<br/>Launch your application to get started.</div>
+
+    <div class="info-grid" id="success-info"></div>
+  </div>
+
+  <div class="powered">Secured by <a href="#">VaultAuth</a></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIGURE THIS — set to your deployed server
+// ══════════════════════════════════════════════
+const SERVER_URL = 'http://localhost:3000';
+// ══════════════════════════════════════════════
+
+// Generate a pseudo-HWID from browser fingerprint
+function getBrowserHWID() {
+  const canvas = document.createElement('canvas');
+  const gl = canvas.getContext('webgl');
+  const dbgInfo = gl?.getExtension('WEBGL_debug_renderer_info');
+  const renderer = gl?.getParameter(dbgInfo?.UNMASKED_RENDERER_WEBGL) || 'unknown';
+  const raw = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width + 'x' + screen.height,
+    screen.colorDepth,
+    new Date().getTimezoneOffset(),
+    renderer
+  ].join('|');
+  // Simple hash
+  let hash = 0;
+  for (let i = 0; i < raw.length; i++) {
+    hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+    hash |= 0;
+  }
+  return 'WEB-' + Math.abs(hash).toString(16).toUpperCase().padStart(8, '0');
+}
+
+function formatKey(input) {
+  let val = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const parts = [];
+  // First part up to 5 chars (prefix like VAULT)
+  // Then 3 groups of 6
+  if (val.length > 0) parts.push(val.slice(0, 5));
+  if (val.length > 5) parts.push(val.slice(5, 11));
+  if (val.length > 11) parts.push(val.slice(11, 17));
+  if (val.length > 17) parts.push(val.slice(17, 23));
+  const pos = input.selectionStart;
+  input.value = parts.join('-');
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = 'status-msg ' + type;
+  el.style.display = 'block';
+}
+
+function hideStatus() {
+  document.getElementById('status-msg').style.display = 'none';
+}
+
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done'), (el.querySelector('.step-dot').textContent = '✓');
+    else if (i === n) el.classList.add('active');
+  }
+}
+
+async function doActivate() {
+  hideStatus();
+
+  const key = document.getElementById('key-input').value.trim();
+  const username = document.getElementById('username-input').value.trim();
+
+  if (!key) { showStatus('Please enter your license key.', 'error'); return; }
+  if (!username) { showStatus('Please choose a username.', 'error'); return; }
+  if (username.length < 3) { showStatus('Username must be at least 3 characters.', 'error'); return; }
+  if (!/^[a-zA-Z0-9_\-\.]+$/.test(username)) {
+    showStatus('Username can only contain letters, numbers, _ - and .', 'error'); return;
+  }
+
+  const btn = document.getElementById('activate-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Activating...';
+  setStep(2);
+
+  const hwid = getBrowserHWID();
+
+  try {
+    const r = await fetch(`${SERVER_URL}/api/activate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, hwid, username, appVersion: 'web-registration' })
+    });
+    const d = await r.json();
+
+    if (!d.success) {
+      showStatus(d.message || 'Activation failed.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'Activate License →';
+      setStep(1);
+      return;
+    }
+
+    // Success!
+    setStep(3);
+    document.getElementById('form-section').style.display = 'none';
+    const sc = document.getElementById('success-card');
+    sc.style.display = 'block';
+
+    document.getElementById('success-info').innerHTML = `
+      <div class="info-item">
+        <div class="info-item-label">Username</div>
+        <div class="info-item-value">${d.data.username}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">Plan</div>
+        <div class="info-item-value">${d.data.plan}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">Expires</div>
+        <div class="info-item-value">${d.data.expiresAt ? d.data.expiresAt.slice(0,10) : 'Lifetime'}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">Machine ID</div>
+        <div class="info-item-value">${hwid}</div>
+      </div>`;
+
+  } catch (e) {
+    showStatus('Could not reach the activation server. Check your connection.', 'error');
+    btn.disabled = false;
+    btn.innerHTML = 'Activate License →';
+    setStep(1);
+  }
+}
+
+// Check config
+if (!SERVER_URL || SERVER_URL === 'http://localhost:3000') {
+  document.getElementById('config-notice').style.display = 'block';
+}
+
+// Allow Enter to submit
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') doActivate();
+});
+</script>
+</body>
+</html>
