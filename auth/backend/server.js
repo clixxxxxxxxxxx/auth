@@ -370,7 +370,7 @@ app.get('/api/admin/stats', adminAuth, (req, res) => {
 });
 
 // Serve the dashboard
-app.use(express.static(path.join(__dirname, '../frontend')));
+//app.use(express.static(path.join(__dirname, '../frontend')));
 
 app.listen(CONFIG.PORT, () => {
   console.log(`\n🔐 VaultAuth Server running on port ${CONFIG.PORT}`);
