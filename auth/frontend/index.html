@@ -2,169 +2,180 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>VaultAuth — License Management</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg:#0a0a0f;--surface:#111118;--border:#1e1e2e;
-    --accent:#7c6af7;--accent2:#3ecfcf;
-    --danger:#f05d7a;--success:#3ecf8e;--warn:#f5a623;
-    --text:#e8e8f0;--muted:#5a5a7a;
-    --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
-  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,106,247,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,247,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+:root{--bg:#0a0a0f;--surface:#111118;--border:#1e1e2e;--accent:#7c6af7;--accent2:#3ecfcf;--danger:#f05d7a;--success:#3ecf8e;--warn:#f5a623;--text:#e8e8f0;--muted:#5a5a7a;--mono:'DM Mono',monospace;--sans:'Syne',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,106,247,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,247,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 
-  /* LOGIN */
-  #login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;background:var(--bg);}
-  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px;width:420px;position:relative;overflow:hidden;}
-  .login-card::before{content:'';position:absolute;top:-60px;left:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(124,106,247,0.2) 0%,transparent 70%);pointer-events:none;}
-  .login-card::after{content:'';position:absolute;bottom:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(62,207,207,0.1) 0%,transparent 70%);pointer-events:none;}
-  .logo{display:flex;align-items:center;gap:10px;margin-bottom:36px;}
-  .logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
-  .logo-text{font-size:24px;font-weight:800;letter-spacing:-0.5px;}
-  .logo-text span{color:var(--accent);}
-  .login-title{font-size:18px;font-weight:600;margin-bottom:8px;}
-  .login-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
+/* LOGIN */
+#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;background:var(--bg);}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px;width:440px;position:relative;overflow:hidden;}
+.login-card::before{content:'';position:absolute;top:-60px;left:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(124,106,247,0.2) 0%,transparent 70%);pointer-events:none;}
+.login-card::after{content:'';position:absolute;bottom:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(62,207,207,0.1) 0%,transparent 70%);pointer-events:none;}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:36px;}
+.logo-icon{width:42px;height:42px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
+.logo-text{font-size:24px;font-weight:800;letter-spacing:-0.5px;}
+.logo-text span{color:var(--accent);}
+.login-title{font-size:18px;font-weight:600;margin-bottom:8px;}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:28px;}
 
-  /* FORM */
-  .field{margin-bottom:16px;}
-  .field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
-  input[type=text],input[type=password],input[type=number],select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color 0.2s;}
-  input:focus,select:focus,textarea:focus{border-color:var(--accent);}
-  select option{background:var(--surface);}
+/* FORM */
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+input[type=text],input[type=password],input[type=number],select,textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color 0.2s;}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);}
+select option{background:var(--surface);}
 
-  /* BUTTONS */
-  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;text-decoration:none;}
-  .btn-primary{background:var(--accent);color:#fff;}
-  .btn-primary:hover{background:#6a59e0;transform:translateY(-1px);}
-  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
-  .btn-ghost:hover{color:var(--text);border-color:var(--accent);}
-  .btn-danger{background:rgba(240,93,122,0.15);color:var(--danger);border:1px solid rgba(240,93,122,0.3);}
-  .btn-danger:hover{background:var(--danger);color:#fff;}
-  .btn-success{background:rgba(62,207,142,0.15);color:var(--success);border:1px solid rgba(62,207,142,0.3);}
-  .btn-success:hover{background:var(--success);color:#000;}
-  .btn-warn{background:rgba(245,166,35,0.15);color:var(--warn);border:1px solid rgba(245,166,35,0.3);}
-  .btn-warn:hover{background:var(--warn);color:#000;}
-  .btn-full{width:100%;justify-content:center;}
-  .btn-sm{padding:6px 12px;font-size:11px;}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#6a59e0;transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:var(--accent);}
+.btn-danger{background:rgba(240,93,122,0.15);color:var(--danger);border:1px solid rgba(240,93,122,0.3);}
+.btn-danger:hover{background:var(--danger);color:#fff;}
+.btn-success{background:rgba(62,207,142,0.15);color:var(--success);border:1px solid rgba(62,207,142,0.3);}
+.btn-success:hover{background:var(--success);color:#000;}
+.btn-warn{background:rgba(245,166,35,0.15);color:var(--warn);border:1px solid rgba(245,166,35,0.3);}
+.btn-warn:hover{background:var(--warn);color:#000;}
+.btn-full{width:100%;justify-content:center;}
+.btn-sm{padding:6px 12px;font-size:11px;}
 
-  /* LAYOUT */
-  #app{display:none;min-height:100vh;position:relative;z-index:1;}
-  .sidebar{position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 16px;z-index:10;}
-  .sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 8px;margin-bottom:36px;}
-  .sidebar-logo .logo-icon{width:36px;height:36px;font-size:16px;}
-  .sidebar-logo .logo-text{font-size:20px;font-weight:800;}
-  .nav-section{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;padding:0 8px;margin-bottom:8px;margin-top:20px;}
-  .nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);transition:all 0.15s;margin-bottom:2px;}
-  .nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text);}
-  .nav-item.active{background:rgba(124,106,247,0.12);color:var(--accent);}
-  .nav-item .icon{font-size:16px;width:20px;text-align:center;}
-  .sidebar-bottom{margin-top:auto;padding-top:16px;border-top:1px solid var(--border);}
-  .server-url-badge{font-family:var(--mono);font-size:10px;color:var(--muted);padding:8px 10px;background:var(--bg);border-radius:6px;word-break:break-all;margin-bottom:12px;}
-  .main{margin-left:240px;padding:40px;min-height:100vh;}
-  .page{display:none;}
-  .page.active{display:block;animation:fadeIn 0.25s ease;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-  .page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
-  .page-title{font-size:28px;font-weight:800;letter-spacing:-0.5px;}
-  .page-sub{font-size:13px;color:var(--muted);margin-top:4px;}
+/* LAYOUT */
+#app{display:none;min-height:100vh;position:relative;z-index:1;}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:240px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:28px 16px;z-index:10;}
+.sidebar-logo{display:flex;align-items:center;gap:10px;padding:0 8px;margin-bottom:36px;}
+.sidebar-logo .logo-icon{width:36px;height:36px;font-size:16px;}
+.sidebar-logo .logo-text{font-size:20px;font-weight:800;}
+.nav-section{font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;padding:0 8px;margin-bottom:8px;margin-top:20px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted);transition:all 0.15s;margin-bottom:2px;}
+.nav-item:hover{background:rgba(255,255,255,0.04);color:var(--text);}
+.nav-item.active{background:rgba(124,106,247,0.12);color:var(--accent);}
+.nav-item .icon{font-size:16px;width:20px;text-align:center;}
+.sidebar-bottom{margin-top:auto;padding-top:16px;border-top:1px solid var(--border);}
+.server-url-badge{font-family:var(--mono);font-size:10px;color:var(--muted);padding:8px 10px;background:var(--bg);border-radius:6px;word-break:break-all;margin-bottom:12px;}
+.main{margin-left:240px;padding:40px;min-height:100vh;}
+.page{display:none;}
+.page.active{display:block;animation:fadeIn 0.25s ease;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;}
+.page-title{font-size:28px;font-weight:800;letter-spacing:-0.5px;}
+.page-sub{font-size:13px;color:var(--muted);margin-top:4px;}
 
-  /* STATS */
-  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px;margin-bottom:32px;}
-  .stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;overflow:hidden;}
-  .stat-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:0.15;}
-  .stat-card.purple::before{background:var(--accent);}
-  .stat-card.teal::before{background:var(--accent2);}
-  .stat-card.red::before{background:var(--danger);}
-  .stat-card.green::before{background:var(--success);}
-  .stat-card.orange::before{background:var(--warn);}
-  .stat-card.pink::before{background:#f05d7a;}
-  .stat-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;}
-  .stat-value{font-size:36px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;}
-  .stat-card.purple .stat-value{color:var(--accent);}
-  .stat-card.teal .stat-value{color:var(--accent2);}
-  .stat-card.red .stat-value{color:var(--danger);}
-  .stat-card.green .stat-value{color:var(--success);}
-  .stat-card.orange .stat-value{color:var(--warn);}
-  .stat-card.pink .stat-value{color:#f05d7a;}
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px;margin-bottom:32px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;position:relative;overflow:hidden;}
+.stat-card::before{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;opacity:0.15;}
+.stat-card.purple::before{background:var(--accent);}
+.stat-card.teal::before{background:var(--accent2);}
+.stat-card.red::before{background:var(--danger);}
+.stat-card.green::before{background:var(--success);}
+.stat-card.orange::before{background:var(--warn);}
+.stat-card.pink::before{background:#f05d7a;}
+.stat-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.stat-value{font-size:32px;font-weight:800;font-family:var(--mono);letter-spacing:-1px;}
+.stat-card.purple .stat-value{color:var(--accent);}
+.stat-card.teal .stat-value{color:var(--accent2);}
+.stat-card.red .stat-value{color:var(--danger);}
+.stat-card.green .stat-value{color:var(--success);}
+.stat-card.orange .stat-value{color:var(--warn);}
+.stat-card.pink .stat-value{color:#f05d7a;}
 
-  /* PANEL */
-  .panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
-  .panel-header{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:15px;}
-  .panel-body{padding:24px;}
+/* PANEL */
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
+.panel-header{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;font-weight:700;font-size:14px;}
+.panel-body{padding:24px;}
 
-  /* TABLE */
-  .table-wrap{overflow-x:auto;}
-  table{width:100%;border-collapse:collapse;font-size:13px;}
-  th{text-align:left;padding:10px 16px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
-  td{padding:12px 16px;border-bottom:1px solid rgba(30,30,46,0.5);font-family:var(--mono);font-size:12px;vertical-align:middle;}
-  tr:last-child td{border-bottom:none;}
-  tr:hover td{background:rgba(255,255,255,0.02);}
+/* TABLE */
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:11px 14px;border-bottom:1px solid rgba(30,30,46,0.5);font-family:var(--mono);font-size:11px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
 
-  /* BADGES */
-  .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;font-family:var(--sans);letter-spacing:0.5px;text-transform:uppercase;}
-  .badge-active{background:rgba(62,207,142,0.12);color:var(--success);}
-  .badge-pending{background:rgba(124,106,247,0.12);color:var(--accent);}
-  .badge-expired{background:rgba(245,166,35,0.12);color:var(--warn);}
-  .badge-banned{background:rgba(240,93,122,0.12);color:var(--danger);}
-  .badge-plan{background:rgba(62,207,207,0.12);color:var(--accent2);}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:100px;font-size:10px;font-weight:700;font-family:var(--sans);letter-spacing:0.5px;text-transform:uppercase;}
+.badge-active{background:rgba(62,207,142,0.12);color:var(--success);}
+.badge-pending{background:rgba(124,106,247,0.12);color:var(--accent);}
+.badge-expired{background:rgba(245,166,35,0.12);color:var(--warn);}
+.badge-banned{background:rgba(240,93,122,0.12);color:var(--danger);}
+.badge-plan{background:rgba(62,207,207,0.12);color:var(--accent2);}
+.badge-app{background:rgba(124,106,247,0.08);color:var(--accent);border:1px solid rgba(124,106,247,0.2);}
+.badge-disabled{background:rgba(90,90,122,0.12);color:var(--muted);}
 
-  .key-cell{font-family:var(--mono);letter-spacing:1px;color:var(--text);cursor:pointer;}
-  .key-cell:hover{color:var(--accent);}
-  .hwid-cell{font-family:var(--mono);font-size:11px;color:var(--muted);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
-  .hwid-cell:hover{color:var(--accent2);}
-  .ip-cell{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.key-cell{font-family:var(--mono);letter-spacing:0.5px;color:var(--text);cursor:pointer;}
+.key-cell:hover{color:var(--accent);}
+.hwid-cell{font-family:var(--mono);font-size:10px;color:var(--muted);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
+.hwid-cell:hover{color:var(--accent2);}
+.ip-cell{font-family:var(--mono);font-size:11px;color:var(--muted);}
+.actions-cell{display:flex;gap:4px;flex-wrap:wrap;}
 
-  /* GENERATE */
-  .gen-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
+/* APP CARD */
+.app-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:24px;position:relative;overflow:hidden;transition:border-color 0.2s;}
+.app-card:hover{border-color:rgba(124,106,247,0.3);}
+.app-card.disabled-app{opacity:0.55;}
+.app-card-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;}
+.app-card-name{font-size:16px;font-weight:700;}
+.app-card-ver{font-size:11px;color:var(--muted);margin-top:2px;}
+.app-card-desc{font-size:12px;color:var(--muted);margin-bottom:16px;line-height:1.6;}
+.cred-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.cred-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;width:60px;flex-shrink:0;}
+.cred-val{font-family:var(--mono);font-size:11px;color:var(--accent2);background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 10px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;}
+.cred-val:hover{border-color:var(--accent2);}
+.app-card-footer{display:flex;gap:8px;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
+.app-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;}
+.app-stats{display:flex;gap:16px;margin-bottom:16px;}
+.app-stat{text-align:center;}
+.app-stat-val{font-size:20px;font-weight:800;font-family:var(--mono);color:var(--accent);}
+.app-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;}
 
-  /* MODAL */
-  .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s;}
-  .modal-overlay.show{opacity:1;pointer-events:all;}
-  .modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:580px;max-width:90vw;max-height:85vh;overflow-y:auto;transform:translateY(20px);transition:transform 0.2s;}
-  .modal-overlay.show .modal{transform:translateY(0);}
-  .modal-title{font-size:18px;font-weight:700;margin-bottom:20px;}
+/* CODE BLOCK */
+.code-block{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px;font-family:var(--mono);font-size:11px;overflow-x:auto;color:#cdd6f4;line-height:1.8;position:relative;}
+.code-copy{position:absolute;top:10px;right:10px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 10px;font-size:10px;cursor:pointer;color:var(--muted);font-family:var(--sans);font-weight:600;}
+.code-copy:hover{color:var(--text);}
 
-  /* TOAST */
-  #toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:13px;font-weight:600;z-index:300;transform:translateY(80px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:320px;display:flex;align-items:center;gap:10px;}
-  #toast.show{transform:translateY(0);opacity:1;}
-  #toast.success{border-color:var(--success);color:var(--success);}
-  #toast.error{border-color:var(--danger);color:var(--danger);}
-  #toast.info{border-color:var(--accent);color:var(--accent);}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;z-index:200;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+.modal-overlay.show{opacity:1;pointer-events:all;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:600px;max-width:92vw;max-height:88vh;overflow-y:auto;transform:translateY(20px);transition:transform 0.2s;}
+.modal-overlay.show .modal{transform:translateY(0);}
+.modal-title{font-size:18px;font-weight:700;margin-bottom:20px;}
 
-  /* SEARCH */
-  .search-bar{position:relative;margin-bottom:16px;}
-  .search-bar input{padding-left:40px;}
-  .search-bar::before{content:'🔍';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:14px;z-index:1;}
+/* TOAST */
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:13px;font-weight:600;z-index:300;transform:translateY(80px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:340px;display:flex;align-items:center;gap:10px;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.success{border-color:var(--success);color:var(--success);}
+#toast.error{border-color:var(--danger);color:var(--danger);}
+#toast.info{border-color:var(--accent);color:var(--accent);}
 
-  /* KEY OUTPUT */
-  .key-output{background:var(--bg);border:1px solid var(--accent);border-radius:10px;padding:16px;font-family:var(--mono);font-size:13px;color:var(--accent2);word-break:break-all;margin-top:16px;max-height:200px;overflow-y:auto;line-height:2;}
+/* SEARCH */
+.search-bar{position:relative;margin-bottom:16px;}
+.search-bar input{padding-left:40px;}
+.search-bar::before{content:'🔍';position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:13px;z-index:1;}
 
-  /* LOG */
-  .log-list{font-family:var(--mono);font-size:11px;color:var(--muted);}
-  .log-entry{padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
-  .log-entry:last-child{border-bottom:none;}
-  .log-event{color:var(--accent);font-weight:700;text-transform:uppercase;font-size:10px;min-width:80px;}
-  .log-time{color:var(--muted);}
-  .log-ip{color:var(--accent2);font-size:10px;}
+.key-output{background:var(--bg);border:1px solid var(--accent);border-radius:10px;padding:16px;font-family:var(--mono);font-size:12px;color:var(--accent2);word-break:break-all;margin-top:16px;max-height:200px;overflow-y:auto;line-height:2;}
+.log-list{font-family:var(--mono);font-size:11px;}
+.log-entry{padding:8px 0;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+.log-entry:last-child{border-bottom:none;}
+.log-event{color:var(--accent);font-weight:700;text-transform:uppercase;font-size:9px;min-width:80px;}
+.log-time{color:var(--muted);font-size:10px;}
+.log-ip{color:var(--accent2);font-size:10px;}
+.empty-state{text-align:center;padding:48px;color:var(--muted);font-size:13px;}
+.empty-state .icon{font-size:40px;margin-bottom:12px;}
+.ban-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:11px;}
+.ban-item:last-child{border-bottom:none;}
+.ban-item-val{color:var(--text);word-break:break-all;flex:1;margin-right:12px;}
+.gen-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
 
-  .empty-state{text-align:center;padding:48px;color:var(--muted);font-size:13px;}
-  .empty-state .icon{font-size:40px;margin-bottom:12px;}
-  .actions-cell{display:flex;gap:6px;flex-wrap:wrap;}
-
-  /* BAN LIST ITEMS */
-  .ban-item{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:12px;}
-  .ban-item:last-child{border-bottom:none;}
-  .ban-item-val{color:var(--text);word-break:break-all;flex:1;margin-right:12px;}
-
-  /* TAB BAR */
-  .tab-bar{display:flex;gap:4px;background:var(--bg);border-radius:10px;padding:4px;margin-bottom:24px;width:fit-content;}
-  .tab{padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;color:var(--muted);transition:all 0.15s;}
-  .tab.active{background:var(--surface);color:var(--text);}
+/* NEW APP SUCCESS */
+.new-app-success{background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:12px;padding:20px;margin-top:20px;}
+.new-app-success-title{color:var(--success);font-weight:700;font-size:13px;margin-bottom:12px;}
 </style>
 </head>
 <body>
@@ -174,8 +185,8 @@
   <div class="login-card">
     <div class="logo"><div class="logo-icon">🔐</div><div class="logo-text">Vault<span>Auth</span></div></div>
     <div class="login-title">Admin Dashboard</div>
-    <div class="login-sub">Enter your server URL and admin secret to continue.</div>
-    <div class="field"><label>Server URL</label><input type="text" id="login-url" placeholder="http://localhost:3000" value="http://localhost:3000"/></div>
+    <div class="login-sub">Sign in to manage licenses and applications.</div>
+    <div class="field"><label>Server URL</label><input type="text" id="login-url" value="https://auth-production-0379.up.railway.app"/></div>
     <div class="field"><label>Admin Secret</label><input type="password" id="login-secret" placeholder="Your ADMIN_SECRET"/></div>
     <div id="login-error" style="color:var(--danger);font-size:12px;margin-bottom:12px;display:none"></div>
     <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In →</button>
@@ -191,6 +202,7 @@
     </div>
     <div class="nav-section">Main</div>
     <div class="nav-item active" onclick="showPage('dashboard')"><span class="icon">⬡</span> Dashboard</div>
+    <div class="nav-item" onclick="showPage('apps')"><span class="icon">⬢</span> Applications</div>
     <div class="nav-item" onclick="showPage('licenses')"><span class="icon">🗝</span> Licenses</div>
     <div class="nav-item" onclick="showPage('generate')"><span class="icon">✦</span> Generate Keys</div>
     <div class="nav-section">Security</div>
@@ -218,17 +230,48 @@
         <div class="stat-card green"><div class="stat-label">Lifetime</div><div class="stat-value" id="stat-lifetime">—</div></div>
         <div class="stat-card orange"><div class="stat-label">Expired</div><div class="stat-value" id="stat-expired">—</div></div>
         <div class="stat-card red"><div class="stat-label">Banned Keys</div><div class="stat-value" id="stat-banned">—</div></div>
+        <div class="stat-card purple"><div class="stat-label">Applications</div><div class="stat-value" id="stat-apps">—</div></div>
         <div class="stat-card pink"><div class="stat-label">Banned HWIDs</div><div class="stat-value" id="stat-bwids">—</div></div>
         <div class="stat-card pink"><div class="stat-label">Banned IPs</div><div class="stat-value" id="stat-bips">—</div></div>
       </div>
       <div class="panel">
-        <div class="panel-header">Recent Licenses <button class="btn btn-ghost" style="font-size:12px" onclick="showPage('licenses')">View All →</button></div>
+        <div class="panel-header">Recent Licenses <button class="btn btn-ghost" style="font-size:11px" onclick="showPage('licenses')">View All →</button></div>
         <div class="panel-body" style="padding:0">
           <div class="table-wrap">
-            <table><thead><tr><th>Key</th><th>Plan</th><th>Status</th><th>Username</th><th>HWID</th><th>Last IP</th><th>Expires</th></tr></thead>
-            <tbody id="recent-tbody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody></table>
+            <table><thead><tr><th>Key</th><th>App</th><th>Plan</th><th>Status</th><th>Username</th><th>HWID</th><th>Last IP</th><th>Expires</th></tr></thead>
+            <tbody id="recent-tbody"><tr><td colspan="8" class="empty-state">Loading...</td></tr></tbody></table>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- APPLICATIONS -->
+    <div class="page" id="page-apps">
+      <div class="page-header">
+        <div><div class="page-title">Applications</div><div class="page-sub">Each app gets a unique ID and secret — required in your C++ project</div></div>
+        <button class="btn btn-primary" onclick="showCreateApp()">+ New Application</button>
+      </div>
+
+      <!-- Create app form -->
+      <div class="panel" id="create-app-panel" style="display:none">
+        <div class="panel-header">Create New Application</div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div class="field"><label>Application Name</label><input type="text" id="new-app-name" placeholder="e.g. MyCheatApp"/></div>
+            <div class="field"><label>Version</label><input type="text" id="new-app-version" placeholder="1.0.0"/></div>
+            <div class="field" style="grid-column:1/-1"><label>Description (optional)</label><input type="text" id="new-app-desc" placeholder="What this application does"/></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="btn btn-primary" onclick="createApp()">Create Application</button>
+            <button class="btn btn-ghost" onclick="hideCreateApp()">Cancel</button>
+          </div>
+          <!-- New app credentials shown here -->
+          <div id="new-app-result" style="display:none"></div>
+        </div>
+      </div>
+
+      <div id="apps-grid" class="app-grid">
+        <div class="empty-state"><div class="icon">⬢</div>No applications yet. Create one to get started.</div>
       </div>
     </div>
 
@@ -243,12 +286,12 @@
       </div>
       <div class="panel">
         <div class="panel-body" style="padding-bottom:0">
-          <div class="search-bar"><input type="text" id="search-input" placeholder="Search key, username, HWID, IP..." oninput="filterLicenses()"/></div>
+          <div class="search-bar"><input type="text" id="search-input" placeholder="Search key, username, HWID, IP, app..." oninput="filterLicenses()"/></div>
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>License Key</th><th>Plan</th><th>Status</th><th>Username</th><th>HWID</th><th>Last IP</th><th>Expires</th><th>Last Seen</th><th>Actions</th></tr></thead>
-            <tbody id="licenses-tbody"><tr><td colspan="9" class="empty-state">Loading...</td></tr></tbody>
+            <thead><tr><th>License Key</th><th>App</th><th>Plan</th><th>Status</th><th>Username</th><th>HWID</th><th>Last IP</th><th>Expires</th><th>Last Seen</th><th>Actions</th></tr></thead>
+            <tbody id="licenses-tbody"><tr><td colspan="10" class="empty-state">Loading...</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -261,12 +304,12 @@
         <div class="panel-header">Configuration</div>
         <div class="panel-body">
           <div class="gen-grid">
+            <div class="field"><label>Application</label><select id="gen-app"><option value="">— No App (unscoped) —</option></select></div>
             <div class="field"><label>Quantity (max 100)</label><input type="number" id="gen-count" value="1" min="1" max="100"/></div>
             <div class="field"><label>Plan</label><select id="gen-plan"><option value="standard">Standard</option><option value="pro">Pro</option><option value="enterprise">Enterprise</option><option value="trial">Trial</option></select></div>
             <div class="field"><label>Key Prefix</label><input type="text" id="gen-prefix" value="VAULT" maxlength="8"/></div>
             <div class="field"><label>Duration (days, blank = lifetime)</label><input type="number" id="gen-duration" placeholder="e.g. 30, 365" min="1"/></div>
             <div class="field"><label>Note (optional)</label><input type="text" id="gen-note" placeholder="e.g. Batch for campaign X"/></div>
-            <div class="field"><label>Allow Multi-Machine</label><select id="gen-multi"><option value="false">No (single machine)</option><option value="true">Yes</option></select></div>
           </div>
           <button class="btn btn-primary" onclick="generateKeys()">✦ Generate Keys</button>
           <div id="gen-output" style="display:none">
@@ -286,107 +329,104 @@
         <div><div class="page-title">Ban Manager</div><div class="page-sub">Block machines and IP addresses</div></div>
         <button class="btn btn-ghost" onclick="loadBanLists()">↺ Refresh</button>
       </div>
-
-      <!-- Manual ban inputs -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
         <div class="panel">
-          <div class="panel-header">🖥 Ban IP Address</div>
+          <div class="panel-header">🌐 Ban IP Address</div>
           <div class="panel-body">
             <div class="field"><label>IP Address</label><input type="text" id="ban-ip-input" placeholder="e.g. 123.45.67.89"/></div>
             <button class="btn btn-danger btn-full" onclick="banIPManual()">Ban IP</button>
           </div>
         </div>
         <div class="panel">
-          <div class="panel-header">🔒 Ban HWID Hash</div>
+          <div class="panel-header">🖥 Ban HWID Hash</div>
           <div class="panel-body">
             <div class="field"><label>HWID Hash (from key detail)</label><input type="text" id="ban-hwid-input" placeholder="sha256 hash..."/></div>
             <button class="btn btn-danger btn-full" onclick="banHWIDManual()">Ban HWID</button>
           </div>
         </div>
       </div>
-
-      <!-- Banned IPs list -->
       <div class="panel">
         <div class="panel-header">Banned IP Addresses <span id="ip-count" style="font-size:12px;color:var(--muted);font-weight:400"></span></div>
         <div id="banned-ips-list"><div class="empty-state"><div class="icon">🌐</div>No banned IPs</div></div>
       </div>
-
-      <!-- Banned HWIDs list -->
       <div class="panel">
         <div class="panel-header">Banned HWIDs <span id="hwid-count" style="font-size:12px;color:var(--muted);font-weight:400"></span></div>
         <div id="banned-hwids-list"><div class="empty-state"><div class="icon">🖥</div>No banned HWIDs</div></div>
       </div>
     </div>
 
-    <!-- REGISTER PAGE -->
+    <!-- REGISTER -->
     <div class="page" id="page-register">
-      <div class="page-header"><div><div class="page-title">Registration Page</div><div class="page-sub">Share this URL with customers to activate their license</div></div></div>
+      <div class="page-header"><div><div class="page-title">Registration Page</div><div class="page-sub">Share this URL with customers</div></div></div>
       <div class="panel">
-        <div class="panel-header">Shareable Registration Link</div>
+        <div class="panel-header">Shareable Link</div>
         <div class="panel-body">
-          <p style="font-size:13px;color:var(--muted);margin-bottom:16px">Your customers visit this page to activate their license key.</p>
           <div style="display:flex;gap:8px;margin-bottom:24px">
             <input type="text" id="register-url-display" readonly style="flex:1"/>
-            <button class="btn btn-primary" onclick="copyRegisterUrl()">Copy Link</button>
+            <button class="btn btn-primary" onclick="copyRegisterUrl()">Copy</button>
           </div>
           <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-            <iframe src="register.html" style="width:100%;height:520px;border:none;background:var(--bg)"></iframe>
+            <iframe src="register.html" style="width:100%;height:480px;border:none;background:var(--bg)"></iframe>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- C++ DOCS -->
+    <!-- DOCS -->
     <div class="page" id="page-docs">
-      <div class="page-header"><div><div class="page-title">C++ Integration</div><div class="page-sub">Drop-in SDK for your application</div></div></div>
+      <div class="page-header"><div><div class="page-title">C++ Integration</div><div class="page-sub">Drop-in SDK — copy vaultauth.hpp into your project</div></div></div>
       <div class="panel">
-        <div class="panel-header">Quick Setup</div>
+        <div class="panel-header">Setup (with Application credentials)</div>
         <div class="panel-body">
-          <p style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:16px">
-            1. Copy <strong>vaultauth.hpp</strong> into your project.<br/>
-            2. Set <code style="color:var(--accent2)">VaultAuth::setServerUrl()</code> to your Railway URL.<br/>
-            3. Call <code style="color:var(--accent2)">VaultAuth::init()</code> on startup — handles everything automatically.
+          <p style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:20px">
+            Every C++ project now requires an <strong>App ID</strong> and <strong>App Secret</strong> from the Applications page.
+            This ties your licenses to a specific project and prevents key sharing across applications.
           </p>
-<pre style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:20px;font-family:var(--mono);font-size:12px;overflow-x:auto;color:#cdd6f4;line-height:1.7"><span style="color:#89b4fa">#include</span> <span style="color:#a6e3a1">"vaultauth.hpp"</span>
+          <div class="code-block">
+<span style="color:#89b4fa">#include</span> <span style="color:#a6e3a1">"vaultauth.hpp"</span>
 
 <span style="color:#89b4fa">int</span> <span style="color:#cba6f7">main</span>() {
-    VaultAuth::setServerUrl(<span style="color:#a6e3a1">"https://your-railway-url.up.railway.app"</span>);
-    VaultAuth::setSSLVerify(<span style="color:#89b4fa">false</span>); <span style="color:#6c7086">// for Railway SSL</span>
+    <span style="color:#6c7086">// Required: set your server + app credentials</span>
+    VaultAuth::setServerUrl(<span style="color:#a6e3a1">"https://auth-production-0379.up.railway.app"</span>);
+    VaultAuth::setAppId(<span style="color:#a6e3a1">"APP-XXXXXXXX"</span>);      <span style="color:#6c7086">// from Applications page</span>
+    VaultAuth::setAppSecret(<span style="color:#a6e3a1">"your-app-secret"</span>); <span style="color:#6c7086">// from Applications page</span>
+    VaultAuth::setSSLVerify(<span style="color:#89b4fa">false</span>);
 
     <span style="color:#89b4fa">if</span> (!VaultAuth::init()) <span style="color:#89b4fa">return</span> 1;
 
     <span style="color:#6c7086">// your app here...</span>
-}</pre>
+}</div>
         </div>
       </div>
     </div>
 
-  </div><!-- /main -->
-</div><!-- /app -->
+  </div>
+</div>
 
 <!-- DETAIL MODAL -->
 <div class="modal-overlay" id="detail-modal">
   <div class="modal">
     <div class="modal-title" id="modal-title">License Detail</div>
     <div id="modal-body"></div>
-    <div style="margin-top:24px;display:flex;gap:8px;flex-wrap:wrap" id="modal-actions"></div>
-    <div style="margin-top:12px"><button class="btn btn-ghost" onclick="closeModal()">Close</button></div>
+    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap" id="modal-actions"></div>
+    <div style="margin-top:12px"><button class="btn btn-ghost btn-sm" onclick="closeModal()">Close</button></div>
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-let SERVER_URL = '';
-let ADMIN_SECRET = '';
-let allLicenses = [];
+let SERVER_URL    = '';
+let ADMIN_SECRET  = '';
+let allLicenses   = [];
+let allApps       = [];
 
 // ── AUTH ──────────────────────────────────────
 async function doLogin() {
   const url    = document.getElementById('login-url').value.trim().replace(/\/$/, '');
   const secret = document.getElementById('login-secret').value.trim();
   const err    = document.getElementById('login-error');
-  if (!url || !secret) { err.textContent = 'Fill in all fields.'; err.style.display = 'block'; return; }
+  if (!url || !secret) { err.textContent='Fill in all fields.'; err.style.display='block'; return; }
   try {
     const r = await fetch(`${url}/api/admin/stats`, { headers: { 'x-admin-secret': secret } });
     const d = await r.json();
@@ -397,18 +437,18 @@ async function doLogin() {
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     err.style.display = 'none';
-    loadStats(); loadRecent();
-  } catch(e) { err.textContent = 'Connection failed. Check URL and secret.'; err.style.display = 'block'; }
+    loadStats(); loadRecent(); loadApps();
+  } catch(e) { err.textContent='Connection failed. Check URL and secret.'; err.style.display='block'; }
 }
 
 function doLogout() {
-  SERVER_URL = ''; ADMIN_SECRET = '';
-  document.getElementById('login-screen').style.display = 'flex';
-  document.getElementById('app').style.display = 'none';
+  SERVER_URL=''; ADMIN_SECRET='';
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('app').style.display='none';
 }
 
 async function api(method, path, body) {
-  const opts = { method, headers: { 'Content-Type': 'application/json', 'x-admin-secret': ADMIN_SECRET } };
+  const opts = { method, headers: { 'Content-Type':'application/json', 'x-admin-secret': ADMIN_SECRET } };
   if (body) opts.body = JSON.stringify(body);
   const r = await fetch(SERVER_URL + path, opts);
   return r.json();
@@ -420,16 +460,18 @@ function showPage(id) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => {
-    if (n.getAttribute('onclick')?.includes("'" + id + "'")) n.classList.add('active');
+    if (n.getAttribute('onclick')?.includes("'"+id+"'")) n.classList.add('active');
   });
-  if (id === 'licenses') loadLicenses();
-  if (id === 'dashboard') { loadStats(); loadRecent(); }
-  if (id === 'bans') loadBanLists();
+  if (id==='licenses') loadLicenses();
+  if (id==='dashboard') { loadStats(); loadRecent(); }
+  if (id==='bans') loadBanLists();
+  if (id==='apps') loadApps();
+  if (id==='generate') loadAppsIntoSelect();
 }
 
 // ── STATS ─────────────────────────────────────
 async function loadStats() {
-  const d = await api('GET', '/api/admin/stats');
+  const d = await api('GET','/api/admin/stats');
   if (!d.success) return;
   const s = d.stats;
   document.getElementById('stat-total').textContent     = s.total;
@@ -437,52 +479,55 @@ async function loadStats() {
   document.getElementById('stat-lifetime').textContent  = s.lifetime;
   document.getElementById('stat-expired').textContent   = s.expired;
   document.getElementById('stat-banned').textContent    = s.banned;
+  document.getElementById('stat-apps').textContent      = s.apps || 0;
   document.getElementById('stat-bwids').textContent     = s.bannedHWIDs || 0;
   document.getElementById('stat-bips').textContent      = s.bannedIPs   || 0;
 }
 
-// ── STATUS BADGE ──────────────────────────────
 function statusBadge(l) {
-  if (l.banned)     return '<span class="badge badge-banned">Banned</span>';
-  if (l.expired)    return '<span class="badge badge-expired">Expired</span>';
-  if (l.hwidHash)   return '<span class="badge badge-active">Active</span>';
+  if (l.banned)   return '<span class="badge badge-banned">Banned</span>';
+  if (l.expired)  return '<span class="badge badge-expired">Expired</span>';
+  if (l.hwidHash) return '<span class="badge badge-active">Active</span>';
   return '<span class="badge badge-pending">Unused</span>';
 }
-
 function hwidCell(l) {
   if (!l.hwidRaw && !l.hwidHash) return '<span style="color:var(--muted)">—</span>';
-  const display = l.hwidRaw || (l.hwidHash?.slice(0,16) + '...');
-  const hash    = l.hwidHash || '';
+  const display = l.hwidRaw || (l.hwidHash?.slice(0,14)+'...');
+  const hash = l.hwidHash || '';
   return `<span class="hwid-cell" title="${hash}" onclick="copyText('${hash}')">${display}</span>`;
 }
-
 function ipCell(ip) {
   if (!ip) return '<span style="color:var(--muted)">—</span>';
   return `<span class="ip-cell">${ip}</span>`;
 }
+function appBadge(l) {
+  if (!l.appName) return '<span style="color:var(--muted)">—</span>';
+  return `<span class="badge badge-app">${l.appName}</span>`;
+}
 
-// ── RECENT TABLE ──────────────────────────────
+// ── RECENT ────────────────────────────────────
 async function loadRecent() {
-  const d = await api('GET', '/api/admin/licenses');
+  const d = await api('GET','/api/admin/licenses');
   if (!d.success) return;
   const recent = d.licenses.slice(-6).reverse();
   const tbody  = document.getElementById('recent-tbody');
-  if (!recent.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><div class="icon">🗝</div>No licenses yet</td></tr>'; return; }
-  tbody.innerHTML = recent.map(l => `
+  if (!recent.length) { tbody.innerHTML='<tr><td colspan="8" class="empty-state">No licenses yet</td></tr>'; return; }
+  tbody.innerHTML = recent.map(l=>`
     <tr>
       <td class="key-cell" onclick="showDetail('${l.key}')">${l.key}</td>
+      <td>${appBadge(l)}</td>
       <td><span class="badge badge-plan">${l.plan}</span></td>
       <td>${statusBadge(l)}</td>
-      <td>${l.username || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${l.username||'<span style="color:var(--muted)">—</span>'}</td>
       <td>${hwidCell(l)}</td>
       <td>${ipCell(l.lastIP)}</td>
-      <td style="color:var(--muted)">${l.expiresAt ? l.expiresAt.slice(0,10) : 'Lifetime'}</td>
+      <td style="color:var(--muted)">${l.expiresAt?l.expiresAt.slice(0,10):'Lifetime'}</td>
     </tr>`).join('');
 }
 
-// ── LICENSES TABLE ────────────────────────────
+// ── LICENSES ──────────────────────────────────
 async function loadLicenses() {
-  const d = await api('GET', '/api/admin/licenses');
+  const d = await api('GET','/api/admin/licenses');
   if (!d.success) return;
   allLicenses = d.licenses;
   renderLicenses(allLicenses);
@@ -490,25 +535,26 @@ async function loadLicenses() {
 
 function renderLicenses(list) {
   const tbody = document.getElementById('licenses-tbody');
-  if (!list.length) { tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="icon">🗝</div>No licenses found</div></td></tr>'; return; }
-  tbody.innerHTML = list.map(l => `
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="10"><div class="empty-state"><div class="icon">🗝</div>No licenses found</div></td></tr>'; return; }
+  tbody.innerHTML = list.map(l=>`
     <tr>
-      <td class="key-cell" onclick="showDetail('${l.key}')" title="Click for details">${l.key}</td>
+      <td class="key-cell" onclick="showDetail('${l.key}')">${l.key}</td>
+      <td>${appBadge(l)}</td>
       <td><span class="badge badge-plan">${l.plan}</span></td>
       <td>${statusBadge(l)}</td>
-      <td>${l.username || '<span style="color:var(--muted)">—</span>'}</td>
+      <td>${l.username||'<span style="color:var(--muted)">—</span>'}</td>
       <td>${hwidCell(l)}</td>
       <td>${ipCell(l.lastIP)}</td>
-      <td style="color:var(--muted)">${l.expiresAt ? l.expiresAt.slice(0,10) : 'Lifetime'}</td>
-      <td style="color:var(--muted)">${l.lastSeen ? l.lastSeen.slice(0,16).replace('T',' ') : '—'}</td>
+      <td style="color:var(--muted)">${l.expiresAt?l.expiresAt.slice(0,10):'Lifetime'}</td>
+      <td style="color:var(--muted)">${l.lastSeen?l.lastSeen.slice(0,16).replace('T',' '):'—'}</td>
       <td>
         <div class="actions-cell">
           <button class="btn btn-ghost btn-sm" onclick="resetKey('${l.key}')">Reset</button>
-          ${l.hwidHash ? `<button class="btn btn-warn btn-sm" onclick="banHWIDFromKey('${l.key}')">Ban HWID</button>` : ''}
-          ${l.lastIP   ? `<button class="btn btn-warn btn-sm" onclick="banIPDirect('${l.lastIP}')">Ban IP</button>` : ''}
+          ${l.hwidHash?`<button class="btn btn-warn btn-sm" onclick="banHWIDFromKey('${l.key}')">Ban HW</button>`:''}
+          ${l.lastIP?`<button class="btn btn-warn btn-sm" onclick="banIPDirect('${l.lastIP}')">Ban IP</button>`:''}
           ${l.banned
-            ? `<button class="btn btn-success btn-sm" onclick="unbanKey('${l.key}')">Unban</button>`
-            : `<button class="btn btn-danger btn-sm" onclick="banKey('${l.key}')">Ban</button>`}
+            ?`<button class="btn btn-success btn-sm" onclick="unbanKey('${l.key}')">Unban</button>`
+            :`<button class="btn btn-danger btn-sm" onclick="banKey('${l.key}')">Ban</button>`}
           <button class="btn btn-danger btn-sm" onclick="deleteKey('${l.key}')">Del</button>
         </div>
       </td>
@@ -517,222 +563,227 @@ function renderLicenses(list) {
 
 function filterLicenses() {
   const q = document.getElementById('search-input').value.toLowerCase();
-  const filtered = allLicenses.filter(l =>
-    l.key.toLowerCase().includes(q) ||
-    (l.username || '').toLowerCase().includes(q) ||
-    l.plan.toLowerCase().includes(q) ||
-    (l.hwidRaw  || '').toLowerCase().includes(q) ||
-    (l.hwidHash || '').toLowerCase().includes(q) ||
-    (l.lastIP   || '').includes(q)
+  const f = allLicenses.filter(l=>
+    l.key.toLowerCase().includes(q)||
+    (l.username||'').toLowerCase().includes(q)||
+    l.plan.toLowerCase().includes(q)||
+    (l.hwidRaw||'').toLowerCase().includes(q)||
+    (l.hwidHash||'').toLowerCase().includes(q)||
+    (l.lastIP||'').includes(q)||
+    (l.appName||'').toLowerCase().includes(q)
   );
-  renderLicenses(filtered);
+  renderLicenses(f);
+}
+
+// ── APPLICATIONS ──────────────────────────────
+async function loadApps() {
+  const d = await api('GET','/api/admin/apps');
+  if (!d.success) return;
+  allApps = d.apps;
+  renderApps(allApps);
+}
+
+function renderApps(list) {
+  const grid = document.getElementById('apps-grid');
+  if (!list.length) {
+    grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><div class="icon">⬢</div>No applications yet. Create one to get started.</div>';
+    return;
+  }
+  grid.innerHTML = list.map(a=>`
+    <div class="app-card ${a.disabled?'disabled-app':''}">
+      <div class="app-card-header">
+        <div>
+          <div class="app-card-name">${a.name}</div>
+          <div class="app-card-ver">v${a.version} &nbsp;·&nbsp; ${a.createdAt?.slice(0,10)||'—'}</div>
+        </div>
+        <span class="badge ${a.disabled?'badge-disabled':'badge-active'}">${a.disabled?'Disabled':'Active'}</span>
+      </div>
+      ${a.description?`<div class="app-card-desc">${a.description}</div>`:''}
+      <div class="cred-row">
+        <span class="cred-label">App ID</span>
+        <span class="cred-val" onclick="copyText('${a.id}')" title="Click to copy">${a.id}</span>
+      </div>
+      <div class="cred-row">
+        <span class="cred-label">Secret</span>
+        <span class="cred-val" onclick="copyText('${a.secret}')" title="Click to copy">${a.secret}</span>
+      </div>
+      <div class="app-card-footer">
+        <button class="btn btn-ghost btn-sm" onclick="regenSecret('${a.id}')">↺ Regen Secret</button>
+        <button class="btn ${a.disabled?'btn-success':'btn-warn'} btn-sm" onclick="toggleApp('${a.id}')">${a.disabled?'Enable':'Disable'}</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteApp('${a.id}')">Delete</button>
+      </div>
+    </div>`).join('');
+}
+
+function showCreateApp() {
+  document.getElementById('create-app-panel').style.display='block';
+  document.getElementById('new-app-result').style.display='none';
+}
+function hideCreateApp() {
+  document.getElementById('create-app-panel').style.display='none';
+}
+
+async function createApp() {
+  const name    = document.getElementById('new-app-name').value.trim();
+  const version = document.getElementById('new-app-version').value.trim() || '1.0.0';
+  const desc    = document.getElementById('new-app-desc').value.trim();
+  if (!name) { toast('Enter an application name','error'); return; }
+
+  const d = await api('POST','/api/admin/apps/create',{name,version,description:desc});
+  if (!d.success) { toast(d.message,'error'); return; }
+
+  // Show credentials immediately — user needs to save these
+  const el = document.getElementById('new-app-result');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <div class="new-app-success">
+      <div class="new-app-success-title">✓ Application created — save these credentials now!</div>
+      <div class="cred-row"><span class="cred-label">App ID</span><span class="cred-val" onclick="copyText('${d.appId}')" title="Click to copy">${d.appId}</span></div>
+      <div class="cred-row"><span class="cred-label">Secret</span><span class="cred-val" onclick="copyText('${d.secret}')" title="Click to copy">${d.secret}</span></div>
+      <p style="font-size:11px;color:var(--muted);margin-top:12px">Use these in your C++ app with <code style="color:var(--accent2)">VaultAuth::setAppId()</code> and <code style="color:var(--accent2)">VaultAuth::setAppSecret()</code>.</p>
+    </div>`;
+
+  document.getElementById('new-app-name').value='';
+  document.getElementById('new-app-version').value='';
+  document.getElementById('new-app-desc').value='';
+  toast(`App "${name}" created!`,'success');
+  loadApps();
+}
+
+async function regenSecret(id) {
+  if (!confirm('Regenerate secret? Your C++ app will stop working until you update it.')) return;
+  const d = await api('POST',`/api/admin/apps/regen/${id}`);
+  if (!d.success) { toast(d.message,'error'); return; }
+  toast('New secret: ' + d.secret, 'info');
+  loadApps();
+}
+
+async function toggleApp(id) {
+  const d = await api('POST',`/api/admin/apps/toggle/${id}`);
+  toast(d.message, d.success?'success':'error');
+  loadApps();
+}
+
+async function deleteApp(id) {
+  if (!confirm('Delete this application? Keys scoped to it will no longer work.')) return;
+  const d = await api('DELETE',`/api/admin/apps/${id}`);
+  toast(d.message, d.success?'success':'error');
+  loadApps();
+}
+
+async function loadAppsIntoSelect() {
+  const d = await api('GET','/api/admin/apps');
+  if (!d.success) return;
+  const sel = document.getElementById('gen-app');
+  sel.innerHTML = '<option value="">— No App (unscoped) —</option>' +
+    d.apps.map(a=>`<option value="${a.id}">${a.name} (${a.id})</option>`).join('');
 }
 
 // ── GENERATE ──────────────────────────────────
 async function generateKeys() {
-  const count  = parseInt(document.getElementById('gen-count').value) || 1;
+  const appId  = document.getElementById('gen-app').value || null;
+  const count  = parseInt(document.getElementById('gen-count').value)||1;
   const plan   = document.getElementById('gen-plan').value;
-  const prefix = document.getElementById('gen-prefix').value || 'VAULT';
+  const prefix = document.getElementById('gen-prefix').value||'VAULT';
   const dur    = document.getElementById('gen-duration').value;
   const note   = document.getElementById('gen-note').value;
-  const multi  = document.getElementById('gen-multi').value === 'true';
-  const d = await api('POST', '/api/admin/generate', { count, plan, prefix, durationDays: dur ? parseInt(dur) : null, note, allowMultiple: multi });
-  if (!d.success) { toast('Generation failed', 'error'); return; }
-  document.getElementById('gen-output').style.display = 'block';
-  document.getElementById('gen-keys-display').innerHTML = d.keys.map(k => `<div style="padding:4px 0">${k}</div>`).join('');
-  toast(`Generated ${d.keys.length} key(s)`, 'success');
+  const d = await api('POST','/api/admin/generate',{count,plan,prefix,durationDays:dur?parseInt(dur):null,note,appId});
+  if (!d.success) { toast('Generation failed','error'); return; }
+  document.getElementById('gen-output').style.display='block';
+  document.getElementById('gen-keys-display').innerHTML=d.keys.map(k=>`<div style="padding:4px 0">${k}</div>`).join('');
+  toast(`Generated ${d.keys.length} key(s)`,'success');
   loadLicenses();
 }
 
 function copyKeys() {
-  const keys = [...document.querySelectorAll('#gen-keys-display div')].map(d => d.textContent).join('\n');
-  navigator.clipboard.writeText(keys).then(() => toast('Keys copied!', 'success'));
+  const keys=[...document.querySelectorAll('#gen-keys-display div')].map(d=>d.textContent).join('\n');
+  navigator.clipboard.writeText(keys).then(()=>toast('Keys copied!','success'));
 }
 
 // ── DETAIL MODAL ──────────────────────────────
 async function showDetail(key) {
-  const d = await api('GET', `/api/admin/license/${key}`);
+  const d = await api('GET',`/api/admin/license/${key}`);
   if (!d.success) return;
-  const l    = d.license;
-  const hist = d.history;
-
-  document.getElementById('modal-title').textContent = key;
-  document.getElementById('modal-body').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px">
-      ${infoRow('Plan',         `<span class="badge badge-plan">${l.plan}</span>`)}
-      ${infoRow('Status',       statusBadge(d))}
-      ${infoRow('Username',     l.username    || '—')}
-      ${infoRow('Expires',      l.expiresAt   ? l.expiresAt.slice(0,10) : 'Lifetime')}
-      ${infoRow('Created',      l.createdAt?.slice(0,16).replace('T',' ') || '—')}
-      ${infoRow('Last Seen',    l.lastSeen?.slice(0,16).replace('T',' ')  || '—')}
-      ${infoRow('App Version',  l.appVersion  || '—')}
-      ${infoRow('Last IP',      l.lastIP      || '—')}
-      ${infoRow('HWID (raw)',   l.hwidRaw     || '—')}
-      ${infoRow('HWID Hash',    l.hwidHash    ? `<span style="font-size:10px;word-break:break-all;color:var(--accent2)">${l.hwidHash}</span>` : '—')}
-      ${infoRow('HWID Banned',  d.hwidBanned  ? '<span class="badge badge-banned">Yes</span>' : '<span style="color:var(--muted)">No</span>')}
-      ${infoRow('IP Banned',    d.ipBanned    ? '<span class="badge badge-banned">Yes</span>' : '<span style="color:var(--muted)">No</span>')}
-      ${l.note ? infoRow('Note', l.note) : ''}
+  const l=d.license, hist=d.history;
+  document.getElementById('modal-title').textContent=key;
+  document.getElementById('modal-body').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      ${infoRow('Plan',`<span class="badge badge-plan">${l.plan}</span>`)}
+      ${infoRow('Status',statusBadge(d))}
+      ${infoRow('Application',l.appName?`<span class="badge badge-app">${l.appName}</span>`:'—')}
+      ${infoRow('Username',l.username||'—')}
+      ${infoRow('Expires',l.expiresAt?l.expiresAt.slice(0,10):'Lifetime')}
+      ${infoRow('Created',l.createdAt?.slice(0,16).replace('T',' ')||'—')}
+      ${infoRow('Last Seen',l.lastSeen?.slice(0,16).replace('T',' ')||'—')}
+      ${infoRow('Last IP',l.lastIP||'—')}
+      ${infoRow('HWID (raw)',l.hwidRaw||'—')}
+      ${infoRow('HWID Hash',l.hwidHash?`<span style="font-size:9px;word-break:break-all;color:var(--accent2)">${l.hwidHash}</span>`:'—')}
+      ${infoRow('HWID Banned',d.hwidBanned?'<span class="badge badge-banned">Yes</span>':'<span style="color:var(--muted)">No</span>')}
+      ${infoRow('IP Banned',d.ipBanned?'<span class="badge badge-banned">Yes</span>':'<span style="color:var(--muted)">No</span>')}
+      ${l.note?infoRow('Note',l.note):''}
     </div>
-    <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Activity Log</div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">Activity Log</div>
     <div class="log-list">
-      ${hist.length === 0
-        ? '<div style="color:var(--muted);font-size:12px;padding:8px 0">No activity yet.</div>'
-        : hist.slice().reverse().map(h => `
+      ${hist.length===0?'<div style="color:var(--muted);font-size:12px;padding:8px 0">No activity yet.</div>':
+        hist.slice().reverse().map(h=>`
           <div class="log-entry">
             <span class="log-event">${h.event}</span>
             <span class="log-time">${h.timestamp?.slice(0,16).replace('T',' ')}</span>
-            ${h.username ? `<span>${h.username}</span>` : ''}
-            ${h.ip ? `<span class="log-ip">${h.ip}</span>` : ''}
+            ${h.username?`<span style="color:var(--text);font-size:11px">${h.username}</span>`:''}
+            ${h.ip?`<span class="log-ip">${h.ip}</span>`:''}
           </div>`).join('')}
     </div>`;
-
-  document.getElementById('modal-actions').innerHTML = `
+  document.getElementById('modal-actions').innerHTML=`
     <button class="btn btn-ghost btn-sm" onclick="resetKey('${key}');closeModal()">Reset Machine</button>
-    ${l.hwidHash ? `<button class="btn btn-warn btn-sm" onclick="banHWIDFromKey('${key}');closeModal()">Ban HWID</button>` : ''}
-    ${l.lastIP   ? `<button class="btn btn-warn btn-sm" onclick="banIPDirect('${l.lastIP}');closeModal()">Ban IP</button>` : ''}
+    ${l.hwidHash?`<button class="btn btn-warn btn-sm" onclick="banHWIDFromKey('${key}');closeModal()">Ban HWID</button>`:''}
+    ${l.lastIP?`<button class="btn btn-warn btn-sm" onclick="banIPDirect('${l.lastIP}');closeModal()">Ban IP</button>`:''}
     ${d.banned
-      ? `<button class="btn btn-success btn-sm" onclick="unbanKey('${key}');closeModal()">Unban Key</button>`
-      : `<button class="btn btn-danger btn-sm"  onclick="banKey('${key}');closeModal()">Ban Key</button>`}
+      ?`<button class="btn btn-success btn-sm" onclick="unbanKey('${key}');closeModal()">Unban Key</button>`
+      :`<button class="btn btn-danger btn-sm" onclick="banKey('${key}');closeModal()">Ban Key</button>`}
     <button class="btn btn-danger btn-sm" onclick="deleteKey('${key}');closeModal()">Delete</button>`;
-
   document.getElementById('detail-modal').classList.add('show');
 }
 
-function infoRow(label, value) {
-  return `<div style="background:var(--bg);border-radius:8px;padding:12px">
-    <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px">${label}</div>
-    <div style="font-size:12px;font-family:var(--mono)">${value}</div>
+function infoRow(label,value) {
+  return `<div style="background:var(--bg);border-radius:8px;padding:10px">
+    <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:3px">${label}</div>
+    <div style="font-size:11px;font-family:var(--mono)">${value}</div>
   </div>`;
 }
-
-function closeModal() { document.getElementById('detail-modal').classList.remove('show'); }
-document.getElementById('detail-modal').addEventListener('click', function(e) { if (e.target === this) closeModal(); });
+function closeModal(){document.getElementById('detail-modal').classList.remove('show');}
+document.getElementById('detail-modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
 
 // ── KEY ACTIONS ───────────────────────────────
-async function resetKey(key) {
-  if (!confirm(`Reset machine binding for ${key}?`)) return;
-  const d = await api('POST', `/api/admin/reset/${key}`);
-  toast(d.message, d.success ? 'success' : 'error');
-  loadLicenses();
-}
+async function resetKey(key){if(!confirm(`Reset machine for ${key}?`))return;const d=await api('POST',`/api/admin/reset/${key}`);toast(d.message,d.success?'success':'error');loadLicenses();}
+async function banKey(key){if(!confirm(`Ban ${key}?`))return;const d=await api('POST',`/api/admin/ban/${key}`);toast(d.message,d.success?'success':'error');loadLicenses();}
+async function unbanKey(key){const d=await api('POST',`/api/admin/unban/${key}`);toast(d.message,d.success?'success':'error');loadLicenses();}
+async function deleteKey(key){if(!confirm(`Permanently delete ${key}?`))return;const d=await api('DELETE',`/api/admin/license/${key}`);toast(d.message,d.success?'success':'error');loadLicenses();}
 
-async function banKey(key) {
-  if (!confirm(`Ban key ${key}?`)) return;
-  const d = await api('POST', `/api/admin/ban/${key}`);
-  toast(d.message, d.success ? 'success' : 'error');
-  loadLicenses();
-}
+// ── BAN ACTIONS ───────────────────────────────
+async function banHWIDFromKey(key){if(!confirm(`Ban HWID linked to ${key}?`))return;const d=await api('POST','/api/admin/ban-hwid',{keyToBanFrom:key});toast(d.message,d.success?'success':'error');loadLicenses();loadBanLists();loadStats();}
+async function banHWIDManual(){const hash=document.getElementById('ban-hwid-input').value.trim();if(!hash){toast('Enter a HWID hash','error');return;}const d=await api('POST','/api/admin/ban-hwid',{hwidHash:hash});toast(d.message,d.success?'success':'error');document.getElementById('ban-hwid-input').value='';loadBanLists();loadStats();}
+async function unbanHWID(hash){const d=await api('POST','/api/admin/unban-hwid',{hwidHash:hash});toast(d.message,d.success?'success':'error');loadBanLists();loadStats();}
+async function banIPDirect(ip){if(!confirm(`Ban IP ${ip}?`))return;const d=await api('POST','/api/admin/ban-ip',{ip});toast(d.message,d.success?'success':'error');loadLicenses();loadBanLists();loadStats();}
+async function banIPManual(){const ip=document.getElementById('ban-ip-input').value.trim();if(!ip){toast('Enter an IP address','error');return;}const d=await api('POST','/api/admin/ban-ip',{ip});toast(d.message,d.success?'success':'error');document.getElementById('ban-ip-input').value='';loadBanLists();loadStats();}
+async function unbanIP(ip){const d=await api('POST','/api/admin/unban-ip',{ip});toast(d.message,d.success?'success':'error');loadBanLists();loadStats();}
 
-async function unbanKey(key) {
-  const d = await api('POST', `/api/admin/unban/${key}`);
-  toast(d.message, d.success ? 'success' : 'error');
-  loadLicenses();
-}
-
-async function deleteKey(key) {
-  if (!confirm(`Permanently delete ${key}?`)) return;
-  const d = await api('DELETE', `/api/admin/license/${key}`);
-  toast(d.message, d.success ? 'success' : 'error');
-  loadLicenses();
-}
-
-// ── HWID / IP BAN ACTIONS ─────────────────────
-async function banHWIDFromKey(key) {
-  if (!confirm(`Ban the HWID linked to key ${key}? This will block that machine from all keys.`)) return;
-  const d = await api('POST', '/api/admin/ban-hwid', { keyToBanFrom: key });
-  toast(d.message, d.success ? 'success' : 'error');
-  loadLicenses(); loadBanLists(); loadStats();
-}
-
-async function banHWIDManual() {
-  const hash = document.getElementById('ban-hwid-input').value.trim();
-  if (!hash) { toast('Enter a HWID hash', 'error'); return; }
-  const d = await api('POST', '/api/admin/ban-hwid', { hwidHash: hash });
-  toast(d.message, d.success ? 'success' : 'error');
-  document.getElementById('ban-hwid-input').value = '';
-  loadBanLists(); loadStats();
-}
-
-async function unbanHWID(hash) {
-  const d = await api('POST', '/api/admin/unban-hwid', { hwidHash: hash });
-  toast(d.message, d.success ? 'success' : 'error');
-  loadBanLists(); loadStats();
-}
-
-async function banIPDirect(ip) {
-  if (!confirm(`Ban IP address ${ip}?`)) return;
-  const d = await api('POST', '/api/admin/ban-ip', { ip });
-  toast(d.message, d.success ? 'success' : 'error');
-  loadLicenses(); loadBanLists(); loadStats();
-}
-
-async function banIPManual() {
-  const ip = document.getElementById('ban-ip-input').value.trim();
-  if (!ip) { toast('Enter an IP address', 'error'); return; }
-  const d = await api('POST', '/api/admin/ban-ip', { ip });
-  toast(d.message, d.success ? 'success' : 'error');
-  document.getElementById('ban-ip-input').value = '';
-  loadBanLists(); loadStats();
-}
-
-async function unbanIP(ip) {
-  const d = await api('POST', '/api/admin/unban-ip', { ip });
-  toast(d.message, d.success ? 'success' : 'error');
-  loadBanLists(); loadStats();
-}
-
-// ── BAN LISTS ─────────────────────────────────
-async function loadBanLists() {
-  const d = await api('GET', '/api/admin/banlists');
-  if (!d.success) return;
-
-  // IPs
-  const ipEl = document.getElementById('banned-ips-list');
-  document.getElementById('ip-count').textContent = `(${d.bannedIPs.length})`;
-  if (!d.bannedIPs.length) {
-    ipEl.innerHTML = '<div class="empty-state"><div class="icon">🌐</div>No banned IPs</div>';
-  } else {
-    ipEl.innerHTML = d.bannedIPs.map(ip => `
-      <div class="ban-item">
-        <span class="ban-item-val">${ip}</span>
-        <button class="btn btn-success btn-sm" onclick="unbanIP('${ip}')">Unban</button>
-      </div>`).join('');
-  }
-
-  // HWIDs
-  const hwEl = document.getElementById('banned-hwids-list');
-  document.getElementById('hwid-count').textContent = `(${d.bannedHWIDs.length})`;
-  if (!d.bannedHWIDs.length) {
-    hwEl.innerHTML = '<div class="empty-state"><div class="icon">🖥</div>No banned HWIDs</div>';
-  } else {
-    hwEl.innerHTML = d.bannedHWIDs.map(h => `
-      <div class="ban-item">
-        <span class="ban-item-val">${h}</span>
-        <button class="btn btn-ghost btn-sm" onclick="copyText('${h}')">Copy</button>
-        <button class="btn btn-success btn-sm" onclick="unbanHWID('${h}')">Unban</button>
-      </div>`).join('');
-  }
+async function loadBanLists(){
+  const d=await api('GET','/api/admin/banlists');if(!d.success)return;
+  const ipEl=document.getElementById('banned-ips-list');
+  document.getElementById('ip-count').textContent=`(${d.bannedIPs.length})`;
+  ipEl.innerHTML=!d.bannedIPs.length?'<div class="empty-state"><div class="icon">🌐</div>No banned IPs</div>':
+    d.bannedIPs.map(ip=>`<div class="ban-item"><span class="ban-item-val">${ip}</span><button class="btn btn-success btn-sm" onclick="unbanIP('${ip}')">Unban</button></div>`).join('');
+  const hwEl=document.getElementById('banned-hwids-list');
+  document.getElementById('hwid-count').textContent=`(${d.bannedHWIDs.length})`;
+  hwEl.innerHTML=!d.bannedHWIDs.length?'<div class="empty-state"><div class="icon">🖥</div>No banned HWIDs</div>':
+    d.bannedHWIDs.map(h=>`<div class="ban-item"><span class="ban-item-val">${h}</span><div style="display:flex;gap:6px"><button class="btn btn-ghost btn-sm" onclick="copyText('${h}')">Copy</button><button class="btn btn-success btn-sm" onclick="unbanHWID('${h}')">Unban</button></div></div>`).join('');
 }
 
 // ── UTILS ─────────────────────────────────────
-function copyText(txt) {
-  navigator.clipboard.writeText(txt).then(() => toast('Copied!', 'info'));
-}
+function copyText(txt){navigator.clipboard.writeText(txt).then(()=>toast('Copied!','info'));}
+function copyRegisterUrl(){const url=document.getElementById('register-url-display').value;navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success'));}
+function toast(msg,type='info'){const t=document.getElementById('toast');const icons={success:'✓',error:'✕',info:'ℹ'};t.innerHTML=`<span>${icons[type]}</span> ${msg}`;t.className=`show ${type}`;setTimeout(()=>t.className='',3500);}
 
-function copyRegisterUrl() {
-  const url = document.getElementById('register-url-display').value;
-  navigator.clipboard.writeText(url).then(() => toast('Link copied!', 'success'));
-}
-
-function toast(msg, type = 'info') {
-  const t = document.getElementById('toast');
-  const icons = { success: '✓', error: '✕', info: 'ℹ' };
-  t.innerHTML = `<span>${icons[type]}</span> ${msg}`;
-  t.className = `show ${type}`;
-  setTimeout(() => t.className = '', 3000);
-}
-
-// Init
 loadRecent();
 </script>
 </body>
