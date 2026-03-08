@@ -105,9 +105,9 @@ const authLimiter = rateLimit({
  * Registers a key to a machine + username
  */
 app.post('/api/activate', authLimiter, (req, res) => {
-  const { key, hwid, username, appVersion } = req.body;
+  const { key, username, appVersion } = req.body;
 
-  if (!key || !hwid || !username) {
+  if (!key || !username) {
     return res.status(400).json({ success: false, message: 'Missing required fields.' });
   }
 
@@ -126,39 +126,22 @@ app.post('/api/activate', authLimiter, (req, res) => {
     return res.json({ success: false, message: 'License key has expired.' });
   }
 
-  const machineHash = getMachineHash(hwid);
-
-  // Already activated on this machine?
-  if (license.machineHash && license.machineHash !== machineHash) {
-    if (!license.allowMultiple) {
-      return res.json({
-        success: false,
-        message: 'License already activated on another machine. Contact support to reset.'
-      });
-    }
-  }
-
-  // Activate
-  license.machineHash = machineHash;
   license.username = username;
   license.activatedAt = license.activatedAt || nowISO();
   license.lastSeen = nowISO();
   license.appVersion = appVersion || 'unknown';
 
-  // Log activation
   if (!db.activations[key]) db.activations[key] = [];
   db.activations[key].push({
     event: 'activate',
     timestamp: nowISO(),
     username,
-    hwid: machineHash.slice(0, 12) + '...',
     appVersion
   });
 
   saveDB(db);
 
-  // Build signed session token
-  const sessionPayload = `${key}:${machineHash}:${Date.now()}`;
+  const sessionPayload = `${key}:${Date.now()}`;
   const token = hmacSign(sessionPayload);
 
   return res.json({
