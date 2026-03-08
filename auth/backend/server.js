@@ -1,50 +1,68 @@
 /**
- * VaultAuth - License Key Authentication Backend
+ * VaultAuth - License Key Authentication Backend v2.0
  * Node.js + Express REST API
- * 
- * Deploy this to any Node.js host (Railway, Render, VPS, etc.)
- * Set environment variables in .env file
+ * Uses JSONBin.io as persistent database
+ *
+ * /api/verify  — main endpoint: validates key, auto-binds HWID on first use
+ * /api/validate — heartbeat session check
+ * /api/activate — web registration page endpoint
+ * /api/admin/*  — admin dashboard endpoints
  */
 
 const express = require('express');
 const crypto = require('crypto');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 app.use(express.json());
 app.use(cors({
-  origin: '*', // Restrict to your domain in production
+  origin: '*',
   methods: ['GET', 'POST', 'DELETE'],
 }));
 
 // ─────────────────────────────────────────────
-//  CONFIG  (edit these or use environment vars)
+//  CONFIG
 // ─────────────────────────────────────────────
 const CONFIG = {
-  ADMIN_SECRET: process.env.ADMIN_SECRET || 'CHANGE_THIS_ADMIN_SECRET_IN_PRODUCTION',
-  APP_SECRET:   process.env.APP_SECRET   || 'CHANGE_THIS_APP_SECRET_32CHARS_MIN',
-  PORT:         process.env.PORT          || 3000,
-  DATA_FILE:    process.env.DATA_FILE     || path.join(__dirname, 'data.json'),
+  ADMIN_SECRET:   process.env.ADMIN_SECRET || 'CHANGE_THIS_ADMIN_SECRET_IN_PRODUCTION',
+  APP_SECRET:     process.env.APP_SECRET   || 'CHANGE_THIS_APP_SECRET_32CHARS_MIN',
+  PORT:           process.env.PORT,
+  JSONBIN_BIN_ID: process.env.JSONBIN_BIN_ID,
+  JSONBIN_KEY:    process.env.JSONBIN_KEY,
 };
 
+const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${CONFIG.JSONBIN_BIN_ID}`;
+
 // ─────────────────────────────────────────────
-//  SIMPLE FILE-BASED DATABASE
-//  Replace with PostgreSQL/MongoDB for scale
+//  JSONBIN DATABASE
 // ─────────────────────────────────────────────
-function loadDB() {
+async function loadDB() {
   try {
-    if (fs.existsSync(CONFIG.DATA_FILE)) {
-      return JSON.parse(fs.readFileSync(CONFIG.DATA_FILE, 'utf8'));
-    }
-  } catch (e) {}
-  return { licenses: {}, activations: {}, blacklist: [] };
+    const res = await fetch(JSONBIN_URL + '/latest', {
+      headers: { 'X-Access-Key': CONFIG.JSONBIN_KEY }
+    });
+    const data = await res.json();
+    return data.record || { licenses: {}, activations: {}, blacklist: [] };
+  } catch (e) {
+    console.error('loadDB error:', e.message);
+    return { licenses: {}, activations: {}, blacklist: [] };
+  }
 }
 
-function saveDB(db) {
-  fs.writeFileSync(CONFIG.DATA_FILE, JSON.stringify(db, null, 2));
+async function saveDB(db) {
+  try {
+    await fetch(JSONBIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Access-Key': CONFIG.JSONBIN_KEY
+      },
+      body: JSON.stringify(db)
+    });
+  } catch (e) {
+    console.error('saveDB error:', e.message);
+  }
 }
 
 // ─────────────────────────────────────────────
@@ -62,11 +80,12 @@ function hmacSign(data) {
   return crypto.createHmac('sha256', CONFIG.APP_SECRET).update(data).digest('hex');
 }
 
-function getMachineHash(hwid) {
+function hashHWID(hwid) {
   return crypto.createHash('sha256').update(hwid + CONFIG.APP_SECRET).digest('hex');
 }
 
 function nowISO() { return new Date().toISOString(); }
+
 function daysFromNow(days) {
   const d = new Date();
   d.setDate(d.getDate() + days);
@@ -74,7 +93,7 @@ function daysFromNow(days) {
 }
 
 function isExpired(license) {
-  if (!license.expiresAt) return false; // lifetime
+  if (!license.expiresAt) return false;
   return new Date() > new Date(license.expiresAt);
 }
 
@@ -90,28 +109,24 @@ function adminAuth(req, res, next) {
 //  RATE LIMITING
 // ─────────────────────────────────────────────
 const authLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 20,
   message: { success: false, message: 'Too many requests, slow down.' }
 });
 
 // ─────────────────────────────────────────────
-//  PUBLIC API ENDPOINTS (called by C++ app)
+//  /api/verify  — PRIMARY C++ ENDPOINT
+//  Auto-binds HWID on first use.
+//  Rejects if key is already bound to a different machine.
 // ─────────────────────────────────────────────
-
-/**
- * POST /api/activate
- * Body: { key, hwid, username, appVersion }
- * Registers a key to a machine + username
- */
-app.post('/api/activate', authLimiter, (req, res) => {
+app.post('/api/verify', authLimiter, async (req, res) => {
   const { key, hwid, username, appVersion } = req.body;
 
-  if (!key || !hwid || !username) {
-    return res.status(400).json({ success: false, message: 'Missing required fields.' });
+  if (!key || !hwid) {
+    return res.status(400).json({ success: false, message: 'Missing key or hwid.' });
   }
 
-  const db = loadDB();
+  const db = await loadDB();
   const license = db.licenses[key];
 
   if (!license) {
@@ -119,190 +134,180 @@ app.post('/api/activate', authLimiter, (req, res) => {
   }
 
   if (db.blacklist.includes(key)) {
-    return res.json({ success: false, message: 'License key has been banned.' });
+    return res.json({ success: false, message: 'This license key has been banned.' });
   }
 
   if (isExpired(license)) {
     return res.json({ success: false, message: 'License key has expired.' });
   }
 
-  const machineHash = getMachineHash(hwid);
+  const hwidHash = hashHWID(hwid);
 
-  // Already activated on this machine?
-  if (license.machineHash && license.machineHash !== machineHash) {
-    if (!license.allowMultiple) {
-      return res.json({
-        success: false,
-        message: 'License already activated on another machine. Contact support to reset.'
-      });
-    }
+  // First time this key is used on any machine — bind it now
+  if (!license.hwidHash) {
+    license.hwidHash    = hwidHash;
+    license.username    = username || 'Unknown-PC';
+    license.activatedAt = nowISO();
+    console.log(`Key ${key} bound to machine for user: ${license.username}`);
+  } else if (license.hwidHash !== hwidHash) {
+    // Already bound to a different machine
+    return res.json({
+      success: false,
+      message: 'This key is already activated on another machine. Contact support to reset.'
+    });
   }
 
-  // Activate
-  license.machineHash = machineHash;
-  license.username = username;
-  license.activatedAt = license.activatedAt || nowISO();
-  license.lastSeen = nowISO();
-  license.appVersion = appVersion || 'unknown';
+  // Update last seen and username (keeps PC name current)
+  license.lastSeen   = nowISO();
+  license.username   = username || license.username;
+  license.appVersion = appVersion || license.appVersion || 'unknown';
 
-  // Log activation
   if (!db.activations[key]) db.activations[key] = [];
   db.activations[key].push({
-    event: 'activate',
+    event: 'verify',
     timestamp: nowISO(),
-    username,
-    hwid: machineHash.slice(0, 12) + '...',
-    appVersion
+    username: license.username,
+    appVersion: license.appVersion,
   });
 
-  saveDB(db);
+  await saveDB(db);
 
-  // Build signed session token
-  const sessionPayload = `${key}:${machineHash}:${Date.now()}`;
-  const token = hmacSign(sessionPayload);
+  // Issue a signed session token for heartbeat checks
+  const sessionPayload = `${key}:${hwidHash}:${Date.now()}`;
+  const sessionToken   = hmacSign(sessionPayload);
 
   return res.json({
     success: true,
-    message: 'License activated successfully.',
+    message: 'License verified.',
     data: {
-      username: license.username,
-      plan: license.plan || 'standard',
-      expiresAt: license.expiresAt || null,
+      username:   license.username,
+      plan:       license.plan || 'standard',
+      expiresAt:  license.expiresAt || null,
       activatedAt: license.activatedAt,
-      sessionToken: token,
+      sessionToken,
       sessionPayload,
     }
   });
 });
 
-/**
- * POST /api/validate
- * Body: { key, hwid, sessionPayload, sessionToken }
- * Fast heartbeat check — call every few minutes from C++ app
- */
-app.post('/api/validate', authLimiter, (req, res) => {
-  const { key, hwid, sessionPayload, sessionToken } = req.body;
+// ─────────────────────────────────────────────
+//  /api/validate  — HEARTBEAT (C++ periodic check)
+// ─────────────────────────────────────────────
+app.post('/api/validate', authLimiter, async (req, res) => {
+  const { key, sessionPayload, sessionToken } = req.body;
 
-  if (!key || !hwid || !sessionPayload || !sessionToken) {
+  if (!key || !sessionPayload || !sessionToken) {
     return res.status(400).json({ success: false, message: 'Missing fields.' });
   }
 
-  // Verify HMAC
-  const expectedToken = hmacSign(sessionPayload);
-  if (!crypto.timingSafeEqual(Buffer.from(sessionToken), Buffer.from(expectedToken))) {
-    return res.json({ success: false, message: 'Invalid session token.' });
+  try {
+    const expectedToken = hmacSign(sessionPayload);
+    if (!crypto.timingSafeEqual(Buffer.from(sessionToken), Buffer.from(expectedToken))) {
+      return res.json({ success: false, message: 'Invalid session token.' });
+    }
+  } catch {
+    return res.json({ success: false, message: 'Token error.' });
   }
 
-  const db = loadDB();
+  const db = await loadDB();
   const license = db.licenses[key];
 
-  if (!license) return res.json({ success: false, message: 'Invalid license.' });
+  if (!license)               return res.json({ success: false, message: 'Invalid license.' });
   if (db.blacklist.includes(key)) return res.json({ success: false, message: 'License banned.' });
-  if (isExpired(license)) return res.json({ success: false, message: 'License expired.' });
+  if (isExpired(license))     return res.json({ success: false, message: 'License expired.' });
 
-  const machineHash = getMachineHash(hwid);
-  if (license.machineHash && license.machineHash !== machineHash) {
-    return res.json({ success: false, message: 'Machine mismatch.' });
-  }
-
-  // Update last seen
   license.lastSeen = nowISO();
-  saveDB(db);
+  await saveDB(db);
 
   return res.json({
     success: true,
     message: 'Valid.',
     data: {
-      username: license.username,
-      plan: license.plan || 'standard',
+      username:  license.username,
+      plan:      license.plan || 'standard',
       expiresAt: license.expiresAt || null,
     }
   });
 });
 
-/**
- * POST /api/deactivate
- * Body: { key, hwid, sessionPayload, sessionToken }
- * Unbinds the machine so key can be used elsewhere
- */
-app.post('/api/deactivate', authLimiter, (req, res) => {
-  const { key, hwid, sessionPayload, sessionToken } = req.body;
+// ─────────────────────────────────────────────
+//  /api/activate  — WEB REGISTRATION PAGE
+// ─────────────────────────────────────────────
+app.post('/api/activate', authLimiter, async (req, res) => {
+  const { key, username, appVersion } = req.body;
 
-  const expectedToken = hmacSign(sessionPayload);
-  try {
-    if (!crypto.timingSafeEqual(Buffer.from(sessionToken), Buffer.from(expectedToken))) {
-      return res.json({ success: false, message: 'Invalid session token.' });
-    }
-  } catch { return res.json({ success: false, message: 'Token error.' }); }
+  if (!key || !username) {
+    return res.status(400).json({ success: false, message: 'Missing required fields.' });
+  }
 
-  const db = loadDB();
+  const db = await loadDB();
   const license = db.licenses[key];
-  if (!license) return res.json({ success: false, message: 'Invalid license.' });
 
-  license.machineHash = null;
-  license.username = license.username; // keep username
+  if (!license)               return res.json({ success: false, message: 'Invalid license key.' });
+  if (db.blacklist.includes(key)) return res.json({ success: false, message: 'License key has been banned.' });
+  if (isExpired(license))     return res.json({ success: false, message: 'License key has expired.' });
+
+  license.username    = username;
+  license.activatedAt = license.activatedAt || nowISO();
+  license.lastSeen    = nowISO();
+  license.appVersion  = appVersion || 'web';
 
   if (!db.activations[key]) db.activations[key] = [];
-  db.activations[key].push({ event: 'deactivate', timestamp: nowISO() });
+  db.activations[key].push({ event: 'web-activate', timestamp: nowISO(), username });
 
-  saveDB(db);
-  return res.json({ success: true, message: 'License deactivated. You may now activate on another machine.' });
+  await saveDB(db);
+
+  const sessionPayload = `${key}:${Date.now()}`;
+  const sessionToken   = hmacSign(sessionPayload);
+
+  return res.json({
+    success: true,
+    message: 'License activated successfully.',
+    data: {
+      username:    license.username,
+      plan:        license.plan || 'standard',
+      expiresAt:   license.expiresAt || null,
+      activatedAt: license.activatedAt,
+      sessionToken,
+      sessionPayload,
+    }
+  });
 });
 
 // ─────────────────────────────────────────────
-//  ADMIN API ENDPOINTS
+//  ADMIN ENDPOINTS
 // ─────────────────────────────────────────────
 
-/** POST /api/admin/generate — create one or more keys */
-app.post('/api/admin/generate', adminAuth, (req, res) => {
-  const {
-    count = 1,
-    plan = 'standard',
-    durationDays = null, // null = lifetime
-    prefix = 'VAULT',
-    allowMultiple = false,
-    note = ''
-  } = req.body;
-
-  const db = loadDB();
+app.post('/api/admin/generate', adminAuth, async (req, res) => {
+  const { count = 1, plan = 'standard', durationDays = null, prefix = 'VAULT', allowMultiple = false, note = '' } = req.body;
+  const db = await loadDB();
   const keys = [];
-
   for (let i = 0; i < Math.min(count, 100); i++) {
     const key = generateKey(prefix);
     db.licenses[key] = {
-      plan,
-      createdAt: nowISO(),
+      plan, createdAt: nowISO(),
       expiresAt: durationDays ? daysFromNow(durationDays) : null,
-      activatedAt: null,
-      machineHash: null,
-      username: null,
-      allowMultiple,
-      note,
-      lastSeen: null,
-      appVersion: null,
+      activatedAt: null, hwidHash: null, username: null,
+      allowMultiple, note, lastSeen: null, appVersion: null,
     };
     keys.push(key);
   }
-
-  saveDB(db);
+  await saveDB(db);
   return res.json({ success: true, keys });
 });
 
-/** GET /api/admin/licenses — list all licenses */
-app.get('/api/admin/licenses', adminAuth, (req, res) => {
-  const db = loadDB();
+app.get('/api/admin/licenses', adminAuth, async (req, res) => {
+  const db = await loadDB();
   const list = Object.entries(db.licenses).map(([key, data]) => ({
-    key,
-    ...data,
+    key, ...data,
     expired: isExpired(data),
     banned: db.blacklist.includes(key),
   }));
   return res.json({ success: true, licenses: list, total: list.length });
 });
 
-/** GET /api/admin/license/:key — get single license details */
-app.get('/api/admin/license/:key', adminAuth, (req, res) => {
-  const db = loadDB();
+app.get('/api/admin/license/:key', adminAuth, async (req, res) => {
+  const db = await loadDB();
   const license = db.licenses[req.params.key];
   if (!license) return res.json({ success: false, message: 'Not found.' });
   return res.json({
@@ -314,66 +319,56 @@ app.get('/api/admin/license/:key', adminAuth, (req, res) => {
   });
 });
 
-/** POST /api/admin/reset/:key — unbind machine from key */
-app.post('/api/admin/reset/:key', adminAuth, (req, res) => {
-  const db = loadDB();
+app.post('/api/admin/reset/:key', adminAuth, async (req, res) => {
+  const db = await loadDB();
   const license = db.licenses[req.params.key];
   if (!license) return res.json({ success: false, message: 'Not found.' });
-  license.machineHash = null;
+  license.hwidHash = null;
   if (!db.activations[req.params.key]) db.activations[req.params.key] = [];
   db.activations[req.params.key].push({ event: 'admin_reset', timestamp: nowISO() });
-  saveDB(db);
+  await saveDB(db);
   return res.json({ success: true, message: 'Machine binding cleared.' });
 });
 
-/** POST /api/admin/ban/:key — ban a key */
-app.post('/api/admin/ban/:key', adminAuth, (req, res) => {
-  const db = loadDB();
+app.post('/api/admin/ban/:key', adminAuth, async (req, res) => {
+  const db = await loadDB();
   if (!db.licenses[req.params.key]) return res.json({ success: false, message: 'Not found.' });
   if (!db.blacklist.includes(req.params.key)) db.blacklist.push(req.params.key);
-  saveDB(db);
+  await saveDB(db);
   return res.json({ success: true, message: 'Key banned.' });
 });
 
-/** POST /api/admin/unban/:key */
-app.post('/api/admin/unban/:key', adminAuth, (req, res) => {
-  const db = loadDB();
+app.post('/api/admin/unban/:key', adminAuth, async (req, res) => {
+  const db = await loadDB();
   db.blacklist = db.blacklist.filter(k => k !== req.params.key);
-  saveDB(db);
+  await saveDB(db);
   return res.json({ success: true, message: 'Key unbanned.' });
 });
 
-/** DELETE /api/admin/license/:key — permanently delete */
-app.delete('/api/admin/license/:key', adminAuth, (req, res) => {
-  const db = loadDB();
+app.delete('/api/admin/license/:key', adminAuth, async (req, res) => {
+  const db = await loadDB();
   if (!db.licenses[req.params.key]) return res.json({ success: false, message: 'Not found.' });
   delete db.licenses[req.params.key];
   delete db.activations[req.params.key];
-  saveDB(db);
+  await saveDB(db);
   return res.json({ success: true, message: 'License deleted.' });
 });
 
-/** GET /api/admin/stats */
-app.get('/api/admin/stats', adminAuth, (req, res) => {
-  const db = loadDB();
+app.get('/api/admin/stats', adminAuth, async (req, res) => {
+  const db = await loadDB();
   const licenses = Object.values(db.licenses);
   return res.json({
     success: true,
     stats: {
-      total: licenses.length,
-      activated: licenses.filter(l => l.machineHash).length,
-      expired: licenses.filter(l => isExpired(l)).length,
-      banned: db.blacklist.length,
-      lifetime: licenses.filter(l => !l.expiresAt).length,
+      total:     licenses.length,
+      activated: licenses.filter(l => l.hwidHash).length,
+      expired:   licenses.filter(l => isExpired(l)).length,
+      banned:    db.blacklist.length,
+      lifetime:  licenses.filter(l => !l.expiresAt).length,
     }
   });
 });
 
-// Serve the dashboard
-app.use(express.static(path.join(__dirname, '../frontend')));
-
-app.listen(CONFIG.PORT, () => {
-  console.log(`\n🔐 VaultAuth Server running on port ${CONFIG.PORT}`);
-  console.log(`   Admin Secret: ${CONFIG.ADMIN_SECRET}`);
-  console.log(`   Data file: ${CONFIG.DATA_FILE}\n`);
+app.listen(CONFIG.PORT, '0.0.0.0', () => {
+  console.log(`🔐 VaultAuth v2.0 running on port ${CONFIG.PORT}`);
 });
