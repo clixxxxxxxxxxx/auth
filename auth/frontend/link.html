@@ -152,9 +152,9 @@ input:disabled{opacity:0.4;cursor:not-allowed;}
       <div class="divider">Enter Your Key</div>
       <div class="field">
         <label>License Key</label>
-        <input type="text" id="key-input" placeholder="VYRON-XXXXXX-XXXXXX-XXXXXX"
-          oninput="formatKey(this)" autocomplete="off" spellcheck="false" maxlength="26"/>
-        <div class="hint">Format: VYRON-XXXXXX-XXXXXX-XXXXXX</div>
+        <input type="text" id="key-input" placeholder="VYRON-XXXXXX-XXXXXX-XXXXXX-XXXXXX"
+          oninput="formatKey(this)" autocomplete="off" spellcheck="false" maxlength="33"/>
+        <div class="hint">Format: VYRON-XXXXXX-XXXXXX-XXXXXX-XXXXXX</div>
       </div>
       <button class="btn-primary" id="link-btn" onclick="doLink()">
         Link License →
@@ -239,16 +239,16 @@ function formatKey(input) {
   const cursor = input.selectionStart;
   const prev = input.value;
   let val = prev.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  // VYRON-XXXXXX-XXXXXX-XXXXXX: prefix(5) + 3 groups of 6 = 23 raw chars max
-  val = val.slice(0, 23);
+  // VYRON-XXXXXX-XXXXXX-XXXXXX-XXXXXX: prefix(5) + 4 groups of 6 = 29 raw chars max
+  val = val.slice(0, 29);
   const parts = [];
   if (val.length > 0)  parts.push(val.slice(0, 5));
   if (val.length > 5)  parts.push(val.slice(5, 11));
   if (val.length > 11) parts.push(val.slice(11, 17));
   if (val.length > 17) parts.push(val.slice(17, 23));
+  if (val.length > 23) parts.push(val.slice(23, 29));
   const next = parts.join('-');
   input.value = next;
-  // restore cursor, accounting for added dashes
   const dashes = (next.slice(0, cursor).match(/-/g) || []).length;
   const prevDashes = (prev.slice(0, cursor).match(/-/g) || []).length;
   input.setSelectionRange(cursor + (dashes - prevDashes), cursor + (dashes - prevDashes));
