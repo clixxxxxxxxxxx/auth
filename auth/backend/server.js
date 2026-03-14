@@ -105,6 +105,20 @@ function richEmbed({ title, description, color, fields = [], thumbnail = null })
   return [embed];
 }
 
+// Resolve the best webhook URL: app-level → global config → db global
+function getWebhook(db, appId = null) {
+  if (appId && db.applications?.[appId]?.discordWebhook)
+    return db.applications[appId].discordWebhook;
+  if (CONFIG.DISCORD_WEBHOOK) return CONFIG.DISCORD_WEBHOOK;
+  // fallback: first app that has a webhook set
+  if (db.applications) {
+    for (const a of Object.values(db.applications)) {
+      if (a.discordWebhook) return a.discordWebhook;
+    }
+  }
+  return null;
+}
+
 // ─────────────────────────────────────────────
 //  HELPERS
 // ─────────────────────────────────────────────
@@ -460,7 +474,7 @@ app.post('/api/admin/generate', adminAuth, async (req, res) => {
       { name: '⏳ Expiry', value: expiry, inline: true },
       { name: '📝 Note', value: note || '—', inline: false },
     ]
-  }));
+  }), getWebhook(db, appId));
 
   return res.json({ success: true, keys });
 });
@@ -535,7 +549,7 @@ app.post('/api/admin/ban/:key', adminAuth, async (req, res) => {
       { name: '🖥️ HWID Bound',   value: lic.hwidHash ? '✅ Yes' : '❌ No', inline: true },
       { name: '🌐 Last IP',      value: lic.lastIP || '—',              inline: true  },
     ]
-  }));
+  }), getWebhook(db, lic.appId));
   return res.json({ success: true, message: 'Key banned.' });
 });
 
@@ -555,7 +569,7 @@ app.post('/api/admin/unban/:key', adminAuth, async (req, res) => {
         { name: '👤 Username',    value: lic.username || '—',     inline: true  },
         { name: '📦 Application', value: appName,                 inline: true  },
       ]
-    }));
+    }), getWebhook(db, lic.appId));
   }
   return res.json({ success: true, message: 'Key unbanned.' });
 });
@@ -580,7 +594,7 @@ app.delete('/api/admin/license/:key', adminAuth, async (req, res) => {
       { name: '🖥️ HWID Bound', value: lic.hwidHash ? '✅ Yes' : '❌ No', inline: true },
       { name: '⏳ Was Expiring', value: lic.expiresAt ? lic.expiresAt.slice(0, 10) : 'Lifetime', inline: true },
     ]
-  }));
+  }), getWebhook(db, lic.appId));
   return res.json({ success: true, message: 'Deleted.' });
 });
 
@@ -623,11 +637,11 @@ app.post('/api/admin/bulk', adminAuth, async (req, res) => {
       description: `A bulk admin action was performed on **${affected}** license key(s).`,
       color: actionColors[action] || 0x7c6af7,
       fields: [
-        { name: '⚙️ Action',        value: action,                                                inline: true },
-        { name: '🔢 Keys Affected', value: String(affected),                                      inline: true },
+        { name: '⚙️ Action',        value: action,                                                   inline: true },
+        { name: '🔢 Keys Affected', value: String(affected),                                         inline: true },
         { name: '🔑 Sample Keys',   value: keys.slice(0, 5).map(k => `\`${k}\``).join('\n') || '—', inline: false },
       ]
-    }));
+    }), getWebhook(db));
   }
 
   return res.json({ success: true, message: `Bulk ${action}: ${affected} key(s) affected.`, affected });
@@ -660,7 +674,7 @@ app.post('/api/admin/ban-hwid', adminAuth, async (req, res) => {
       ...(linkedUser ? [{ name: '👤 Username',     value: linkedUser,          inline: true }] : []),
       ...(linkedApp  ? [{ name: '📦 Application',  value: linkedApp,           inline: true }] : []),
     ]
-  }));
+  }), getWebhook(db));
   return res.json({ success: true, message: 'HWID banned.' });
 });
 
@@ -675,7 +689,7 @@ app.post('/api/admin/unban-hwid', adminAuth, async (req, res) => {
     fields: [
       { name: '🔓 HWID Hash', value: `\`${hwidHash.slice(0, 32)}...\``, inline: false },
     ]
-  }));
+  }), getWebhook(db));
   return res.json({ success: true, message: 'HWID unbanned.' });
 });
 
@@ -692,7 +706,7 @@ app.post('/api/admin/ban-ip', adminAuth, async (req, res) => {
       { name: '🚫 IP Address', value: `\`${ip}\``, inline: true },
       { name: '📅 Banned At', value: `<t:${Math.floor(Date.now()/1000)}:F>`, inline: true },
     ]
-  }));
+  }), getWebhook(db));
   return res.json({ success: true, message: `IP ${ip} banned.` });
 });
 
@@ -708,7 +722,7 @@ app.post('/api/admin/unban-ip', adminAuth, async (req, res) => {
       { name: '🔓 IP Address', value: `\`${ip}\``, inline: true },
       { name: '📅 Unbanned At', value: `<t:${Math.floor(Date.now()/1000)}:F>`, inline: true },
     ]
-  }));
+  }), getWebhook(db));
   return res.json({ success: true, message: `IP ${ip} unbanned.` });
 });
 
