@@ -185,10 +185,12 @@ function hideStatus() {
 function formatKey(input) {
   let val = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
   const parts = [];
+  // prefix (up to 5), then up to 4 groups of 6
   if (val.length > 0)  parts.push(val.slice(0, 5));
   if (val.length > 5)  parts.push(val.slice(5, 11));
   if (val.length > 11) parts.push(val.slice(11, 17));
   if (val.length > 17) parts.push(val.slice(17, 23));
+  if (val.length > 23) parts.push(val.slice(23, 29));
   input.value = parts.join('-');
 }
 
