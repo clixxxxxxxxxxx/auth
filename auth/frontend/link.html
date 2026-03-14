@@ -193,13 +193,7 @@ function formatKey(input) {
 }
 
 function connectDiscord() {
-  const params = new URLSearchParams({
-    client_id:     '1482484114618716354',
-    response_type: 'code',
-    redirect_uri:  `${SERVER_URL}/api/discord/callback`,
-    scope:         'identify',
-  });
-  window.location.href = `https://discord.com/oauth2/authorize?${params}`;
+  window.location.href = `${SERVER_URL}/api/discord/oauth`;
 }
 
 async function loadDiscordSession(state) {
