@@ -4,10 +4,11 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>VyronAuth — License Management</title>
+<link rel="icon" type="image/png" href="https://media.discordapp.net/attachments/1463275356814311600/1463657398492201217/VyronClear.png?ex=69b685ed&is=69b5346d&hm=b52c3b25c46e173498bc8bbe66a9b1d86a76b2be52b3088d79b30c164a15502b&=&format=webp&quality=lossless"/>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#020408;--surface:#060d1a;--border:#0d1f3c;--accent:#1a6fff;--accent2:#4db8ff;--danger:#f05d7a;--success:#3ecf8e;--warn:#f5a623;--text:#c8d8f0;--muted:#3a5070;--mono:'DM Mono',monospace;--sans:'Syne',sans-serif;}
+:root{--bg:#010306;--surface:#040a14;--border:#0a1a30;--accent:#1558d6;--accent2:#3a9fe0;--danger:#f05d7a;--success:#3ecf8e;--warn:#f5a623;--text:#b8ccec;--muted:#2e4460;--mono:'DM Mono',monospace;--sans:'Syne',sans-serif;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
 body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(26,111,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(26,111,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
@@ -317,7 +318,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
           <div class="gen-grid">
             <div class="field"><label>Application</label><select id="gen-app"><option value="">— No App (unscoped) —</option></select></div>
             <div class="field"><label>Quantity (max 100)</label><input type="number" id="gen-count" value="1" min="1" max="100"/></div>
-            <div class="field"><label>Plan</label><select id="gen-plan"><option value="standard">Standard</option><option value="pro">Pro</option><option value="enterprise">Enterprise</option><option value="trial">Trial</option></select></div>
+            <div class="field"><label>Plan</label><input type="text" value="standard" readonly style="opacity:0.5;cursor:not-allowed"/></div>
             <div class="field"><label>Key Prefix</label><input type="text" id="gen-prefix" value="VYRON" maxlength="8"/></div>
             <div class="field"><label>Duration (days, blank = lifetime)</label><input type="number" id="gen-duration" placeholder="e.g. 30, 365" min="1"/></div>
             <div class="field"><label>Note (optional)</label><input type="text" id="gen-note" placeholder="e.g. Batch for campaign X"/></div>
@@ -681,7 +682,7 @@ async function loadAppsIntoSelect() {
 async function generateKeys() {
   const appId  = document.getElementById('gen-app').value || null;
   const count  = parseInt(document.getElementById('gen-count').value)||1;
-  const plan   = document.getElementById('gen-plan').value;
+  const plan   = 'standard';
   const prefix = document.getElementById('gen-prefix').value||'VYRON';
   const dur    = document.getElementById('gen-duration').value;
   const note   = document.getElementById('gen-note').value;
