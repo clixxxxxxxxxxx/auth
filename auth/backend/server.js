@@ -16,12 +16,15 @@ app.use(express.json());
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'DELETE'] }));
 
 const CONFIG = {
-  ADMIN_SECRET:   process.env.ADMIN_SECRET   || 'CHANGE_THIS',
-  APP_SECRET:     process.env.APP_SECRET     || 'CHANGE_THIS_32CHARS',
-  PORT:           process.env.PORT,
-  JSONBIN_BIN_ID: process.env.JSONBIN_BIN_ID,
-  JSONBIN_KEY:    process.env.JSONBIN_KEY,
-  DISCORD_WEBHOOK: process.env.DISCORD_WEBHOOK || '',
+  ADMIN_SECRET:          process.env.ADMIN_SECRET          || 'CHANGE_THIS',
+  APP_SECRET:            process.env.APP_SECRET            || 'CHANGE_THIS_32CHARS',
+  PORT:                  process.env.PORT,
+  JSONBIN_BIN_ID:        process.env.JSONBIN_BIN_ID,
+  JSONBIN_KEY:           process.env.JSONBIN_KEY,
+  DISCORD_WEBHOOK:       process.env.DISCORD_WEBHOOK       || '',
+  DISCORD_CLIENT_ID:     process.env.DISCORD_CLIENT_ID     || '1482484114618716354',
+  DISCORD_CLIENT_SECRET: process.env.DISCORD_CLIENT_SECRET || '',
+  DISCORD_REDIRECT_URI:  process.env.DISCORD_REDIRECT_URI  || '',
 };
 
 const JSONBIN_URL = `https://api.jsonbin.io/v3/b/${CONFIG.JSONBIN_BIN_ID}`;
@@ -174,6 +177,11 @@ app.post('/api/verify', authLimiter, appAuth, async (req, res) => {
   // ── IP / HWID bans ────────────────────────
   if (db.bannedIPs.includes(ip))         return res.json({ success: false, message: 'Your IP address has been banned.' });
   if (db.bannedHWIDs.includes(hwidHash)) return res.json({ success: false, message: 'Your machine has been banned.' });
+
+  // ── Discord link required ─────────────────
+  if (license && !license.discordId) {
+    return res.json({ success: false, message: 'License not yet linked to a Discord account. Please visit the link page first.' });
+  }
 
   // ── Key checks ────────────────────────────
   if (!license) {
@@ -742,6 +750,152 @@ app.get('/api/admin/stats', adminAuth, async (req, res) => {
       bannedHWIDs: (db.bannedHWIDs||[]).length, bannedIPs: (db.bannedIPs||[]).length,
       apps: Object.keys(db.applications||{}).length,
     }
+  });
+});
+
+// ─────────────────────────────────────────────
+//  DISCORD OAUTH2 — License Linking
+// ─────────────────────────────────────────────
+
+// Temp in-memory store: state → discord user profile (expires after 10 min)
+const oauthSessions = new Map();
+function cleanOAuthSessions() {
+  const now = Date.now();
+  for (const [k, v] of oauthSessions) {
+    if (now - v.createdAt > 10 * 60 * 1000) oauthSessions.delete(k);
+  }
+}
+setInterval(cleanOAuthSessions, 60 * 1000);
+
+// GET /api/discord/oauth — redirect user to Discord
+app.get('/api/discord/oauth', (req, res) => {
+  if (!CONFIG.DISCORD_CLIENT_ID || !CONFIG.DISCORD_REDIRECT_URI)
+    return res.status(500).send('Discord OAuth not configured.');
+  const state = crypto.randomBytes(16).toString('hex');
+  // Store state with a placeholder so we can validate it on callback
+  oauthSessions.set(state, { createdAt: Date.now(), user: null });
+  const params = new URLSearchParams({
+    client_id:     CONFIG.DISCORD_CLIENT_ID,
+    redirect_uri:  CONFIG.DISCORD_REDIRECT_URI,
+    response_type: 'code',
+    scope:         'identify',
+    state,
+  });
+  res.redirect(`https://discord.com/api/oauth2/authorize?${params}`);
+});
+
+// GET /api/discord/callback — Discord redirects here after auth
+app.get('/api/discord/callback', async (req, res) => {
+  const { code, state } = req.query;
+  if (!code || !state || !oauthSessions.has(state))
+    return res.redirect('/link.html?error=invalid_state');
+
+  try {
+    // Exchange code for token
+    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id:     CONFIG.DISCORD_CLIENT_ID,
+        client_secret: CONFIG.DISCORD_CLIENT_SECRET,
+        grant_type:    'authorization_code',
+        code,
+        redirect_uri:  CONFIG.DISCORD_REDIRECT_URI,
+      }),
+    });
+    const tokenData = await tokenRes.json();
+    if (!tokenData.access_token) return res.redirect('/link.html?error=token_failed');
+
+    // Fetch user profile
+    const userRes = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: `Bearer ${tokenData.access_token}` },
+    });
+    const user = await userRes.json();
+    if (!user.id) return res.redirect('/link.html?error=user_failed');
+
+    // Store user in session keyed by state
+    oauthSessions.set(state, {
+      createdAt: Date.now(),
+      user: {
+        id:       user.id,
+        username: user.username,
+        avatar:   user.avatar
+          ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`
+          : `https://cdn.discordapp.com/embed/avatars/${parseInt(user.discriminator || 0) % 5}.png`,
+      },
+    });
+
+    res.redirect(`/link.html?state=${state}`);
+  } catch (e) {
+    console.error('Discord callback error:', e.message);
+    res.redirect('/link.html?error=server_error');
+  }
+});
+
+// GET /api/discord/session?state=xxx — frontend polls this to get user info
+app.get('/api/discord/session', (req, res) => {
+  const { state } = req.query;
+  if (!state || !oauthSessions.has(state))
+    return res.json({ success: false, message: 'Session not found.' });
+  const session = oauthSessions.get(state);
+  if (!session.user)
+    return res.json({ success: false, message: 'OAuth not completed.' });
+  return res.json({ success: true, user: session.user });
+});
+
+// POST /api/link-license — tie a key to a Discord account (one-time)
+app.post('/api/link-license', authLimiter, async (req, res) => {
+  const { key, state } = req.body;
+  if (!key || !state) return res.status(400).json({ success: false, message: 'Missing key or state.' });
+
+  const session = oauthSessions.get(state);
+  if (!session || !session.user)
+    return res.json({ success: false, message: 'Discord session expired or invalid. Please re-authenticate.' });
+
+  const db  = await loadDB();
+  const lic = db.licenses[key];
+
+  if (!lic)                       return res.json({ success: false, message: 'Invalid license key.' });
+  if (db.blacklist.includes(key)) return res.json({ success: false, message: 'License key has been banned.' });
+  if (isExpired(lic))             return res.json({ success: false, message: 'License key has expired.' });
+  if (lic.discordId)              return res.json({ success: false, message: 'This license key is already linked to a Discord account.' });
+
+  // Check if this Discord account already has a key linked
+  const alreadyLinked = Object.values(db.licenses).find(l => l.discordId === session.user.id);
+  if (alreadyLinked)
+    return res.json({ success: false, message: 'Your Discord account is already linked to a license key.' });
+
+  lic.discordId       = session.user.id;
+  lic.discordUsername = session.user.username;
+  lic.discordAvatar   = session.user.avatar;
+  lic.linkedAt        = nowISO();
+  lic.username        = lic.username || session.user.username;
+
+  if (!db.activations[key]) db.activations[key] = [];
+  db.activations[key].push({ event: 'discord-link', timestamp: nowISO(), discordId: session.user.id, discordUsername: session.user.username });
+
+  await saveDB(db);
+
+  // Invalidate the OAuth session so it can't be reused
+  oauthSessions.delete(state);
+
+  sendDiscord(richEmbed({
+    title: '🔗 License Linked to Discord',
+    description: `A license key has been linked to a Discord account.`,
+    color: 0x7c6af7,
+    thumbnail: session.user.avatar,
+    fields: [
+      { name: '🔑 Key',             value: `\`${key}\``,              inline: false },
+      { name: '👤 Discord',         value: session.user.username,     inline: true  },
+      { name: '🆔 Discord ID',      value: session.user.id,           inline: true  },
+      { name: '🏷️ Plan',            value: lic.plan || 'standard',    inline: true  },
+    ]
+  }), getWebhook(db, lic.appId));
+
+  return res.json({
+    success: true,
+    message: 'License linked successfully.',
+    data: { username: lic.username, plan: lic.plan || 'standard', expiresAt: lic.expiresAt || null }
   });
 });
 
