@@ -68,10 +68,11 @@ async function saveDB(db) {
 // ─────────────────────────────────────────────
 //  DISCORD
 // ─────────────────────────────────────────────
-async function sendDiscord(embeds) {
-  if (!CONFIG.DISCORD_WEBHOOK) return;
+async function sendDiscord(embeds, webhookUrl) {
+  const url = webhookUrl || CONFIG.DISCORD_WEBHOOK;
+  if (!url) return;
   try {
-    await fetch(CONFIG.DISCORD_WEBHOOK, {
+    await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ embeds })
@@ -86,8 +87,22 @@ function discordEmbed(title, description, color, fields = []) {
     color,
     fields,
     timestamp: new Date().toISOString(),
-    footer: { text: 'VaultAuth' }
+    footer: { text: 'VaultAuth • License System', icon_url: 'https://i.imgur.com/AfFp7pu.png' }
   }];
+}
+
+// Rich styled embed builder for admin events
+function richEmbed({ title, description, color, fields = [], thumbnail = null }) {
+  const embed = {
+    title,
+    description,
+    color,
+    fields,
+    timestamp: new Date().toISOString(),
+    footer: { text: 'VaultAuth • Admin Event Logger' },
+  };
+  if (thumbnail) embed.thumbnail = { url: thumbnail };
+  return [embed];
 }
 
 // ─────────────────────────────────────────────
@@ -327,12 +342,28 @@ app.post('/api/admin/apps/update/:id', adminAuth, async (req, res) => {
   const db = await loadDB(); const a = db.applications[req.params.id];
   if (!a) return res.json({ success: false, message: 'App not found.' });
   const { minVersion, maxAuthAttempts, discordWebhook, version, description } = req.body;
+  const prevWebhook = a.discordWebhook;
   if (minVersion       !== undefined) a.minVersion        = minVersion;
   if (maxAuthAttempts  !== undefined) a.maxAuthAttempts   = parseInt(maxAuthAttempts) || 0;
   if (discordWebhook   !== undefined) a.discordWebhook    = discordWebhook;
   if (version          !== undefined) a.version           = version;
   if (description      !== undefined) a.description       = description;
   await saveDB(db);
+
+  // Notify new webhook that it's now the active receiver
+  if (discordWebhook && discordWebhook !== prevWebhook) {
+    sendDiscord(richEmbed({
+      title: '🔔 Webhook Configured',
+      description: `This channel is now the **active notification receiver** for **${a.name}**.\n\nAll license events, bans, and alerts will be delivered here.`,
+      color: 0x7c6af7,
+      fields: [
+        { name: '📦 Application', value: a.name, inline: true },
+        { name: '🆔 App ID', value: req.params.id, inline: true },
+        { name: '📅 Configured At', value: `<t:${Math.floor(Date.now()/1000)}:F>`, inline: false },
+      ]
+    }), discordWebhook);
+  }
+
   return res.json({ success: true, message: 'App updated.', app: a });
 });
 
@@ -360,6 +391,32 @@ app.delete('/api/admin/apps/:id', adminAuth, async (req, res) => {
 // ─────────────────────────────────────────────
 //  ADMIN — DISCORD WEBHOOK (global)
 // ─────────────────────────────────────────────
+app.post('/api/admin/discord/set', adminAuth, async (req, res) => {
+  const { webhookUrl } = req.body;
+  if (!webhookUrl) return res.json({ success: false, message: 'No webhook URL provided.' });
+  const prev = CONFIG.DISCORD_WEBHOOK;
+  CONFIG.DISCORD_WEBHOOK = webhookUrl;
+  // Notify the new webhook it's now active
+  if (webhookUrl !== prev) {
+    try {
+      await fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ embeds: richEmbed({
+          title: '🔔 Global Webhook Configured',
+          description: 'This channel is now the **global notification receiver** for VaultAuth.\n\nAll system-wide license events, bans, and security alerts will be delivered here.',
+          color: 0x7c6af7,
+          fields: [
+            { name: '📅 Configured At', value: `<t:${Math.floor(Date.now()/1000)}:F>`, inline: false },
+            { name: '📡 Status', value: '✅ Active & Listening', inline: true },
+          ]
+        }) })
+      });
+    } catch (e) { return res.json({ success: false, message: 'Webhook URL is invalid or unreachable: ' + e.message }); }
+  }
+  return res.json({ success: true, message: 'Global webhook saved and notified.' });
+});
+
 app.post('/api/admin/discord/test', adminAuth, async (req, res) => {
   const { webhookUrl } = req.body;
   const url = webhookUrl || CONFIG.DISCORD_WEBHOOK;
@@ -387,6 +444,24 @@ app.post('/api/admin/generate', adminAuth, async (req, res) => {
     if (appId && db.applications[appId]) db.applications[appId].keyCount = (db.applications[appId].keyCount || 0) + 1;
   }
   await saveDB(db);
+
+  const appName = appId && db.applications[appId] ? db.applications[appId].name : 'Unscoped';
+  const expiry  = durationDays ? `${durationDays} days` : 'Lifetime';
+  sendDiscord(richEmbed({
+    title: '🗝️ License Key(s) Created',
+    description: keys.length === 1
+      ? `A new license key has been generated and is ready for use.`
+      : `**${keys.length}** new license keys have been generated.`,
+    color: 0x3ecf8e,
+    fields: [
+      { name: '🔑 Key(s)', value: keys.length <= 5 ? keys.map(k => `\`${k}\``).join('\n') : `\`${keys[0]}\`\n... and ${keys.length - 1} more`, inline: false },
+      { name: '📦 Application', value: appName, inline: true },
+      { name: '🏷️ Plan', value: plan, inline: true },
+      { name: '⏳ Expiry', value: expiry, inline: true },
+      { name: '📝 Note', value: note || '—', inline: false },
+    ]
+  }));
+
   return res.json({ success: true, keys });
 });
 
@@ -443,22 +518,70 @@ app.post('/api/admin/reset/:key', adminAuth, async (req, res) => {
 
 app.post('/api/admin/ban/:key', adminAuth, async (req, res) => {
   const db = await loadDB();
-  if (!db.licenses[req.params.key]) return res.json({ success: false, message: 'Not found.' });
+  const lic = db.licenses[req.params.key];
+  if (!lic) return res.json({ success: false, message: 'Not found.' });
   if (!db.blacklist.includes(req.params.key)) db.blacklist.push(req.params.key);
-  await saveDB(db); return res.json({ success: true, message: 'Key banned.' });
+  await saveDB(db);
+  const appName = lic.appId && db.applications[lic.appId] ? db.applications[lic.appId].name : 'Unscoped';
+  sendDiscord(richEmbed({
+    title: '🔨 License Key Banned',
+    description: `A license key has been added to the blacklist and will be rejected on all future auth attempts.`,
+    color: 0xf05d7a,
+    fields: [
+      { name: '🔑 Key',          value: `\`${req.params.key}\``,       inline: false },
+      { name: '👤 Username',     value: lic.username || '—',            inline: true  },
+      { name: '📦 Application',  value: appName,                        inline: true  },
+      { name: '🏷️ Plan',         value: lic.plan || 'standard',         inline: true  },
+      { name: '🖥️ HWID Bound',   value: lic.hwidHash ? '✅ Yes' : '❌ No', inline: true },
+      { name: '🌐 Last IP',      value: lic.lastIP || '—',              inline: true  },
+    ]
+  }));
+  return res.json({ success: true, message: 'Key banned.' });
 });
 
 app.post('/api/admin/unban/:key', adminAuth, async (req, res) => {
   const db = await loadDB();
+  const lic = db.licenses[req.params.key];
   db.blacklist = db.blacklist.filter(k => k !== req.params.key);
-  await saveDB(db); return res.json({ success: true, message: 'Key unbanned.' });
+  await saveDB(db);
+  if (lic) {
+    const appName = lic.appId && db.applications[lic.appId] ? db.applications[lic.appId].name : 'Unscoped';
+    sendDiscord(richEmbed({
+      title: '✅ License Key Unbanned',
+      description: `A license key has been removed from the blacklist and can authenticate again.`,
+      color: 0x3ecf8e,
+      fields: [
+        { name: '🔑 Key',         value: `\`${req.params.key}\``, inline: false },
+        { name: '👤 Username',    value: lic.username || '—',     inline: true  },
+        { name: '📦 Application', value: appName,                 inline: true  },
+      ]
+    }));
+  }
+  return res.json({ success: true, message: 'Key unbanned.' });
 });
 
 app.delete('/api/admin/license/:key', adminAuth, async (req, res) => {
   const db = await loadDB();
-  if (!db.licenses[req.params.key]) return res.json({ success: false, message: 'Not found.' });
+  const lic = db.licenses[req.params.key];
+  if (!lic) return res.json({ success: false, message: 'Not found.' });
+  const appName = lic.appId && db.applications[lic.appId] ? db.applications[lic.appId].name : 'Unscoped';
   delete db.licenses[req.params.key]; delete db.activations[req.params.key];
-  await saveDB(db); return res.json({ success: true, message: 'Deleted.' });
+  await saveDB(db);
+  sendDiscord(richEmbed({
+    title: '🗑️ License Key Deleted',
+    description: `A license key has been permanently removed from the system.`,
+    color: 0xf05d7a,
+    fields: [
+      { name: '🔑 Key', value: `\`${req.params.key}\``, inline: false },
+      { name: '👤 Username', value: lic.username || '—', inline: true },
+      { name: '📦 Application', value: appName, inline: true },
+      { name: '🏷️ Plan', value: lic.plan || 'standard', inline: true },
+      { name: '📅 Created', value: lic.createdAt ? lic.createdAt.slice(0, 10) : '—', inline: true },
+      { name: '🖥️ HWID Bound', value: lic.hwidHash ? '✅ Yes' : '❌ No', inline: true },
+      { name: '⏳ Was Expiring', value: lic.expiresAt ? lic.expiresAt.slice(0, 10) : 'Lifetime', inline: true },
+    ]
+  }));
+  return res.json({ success: true, message: 'Deleted.' });
 });
 
 // ─────────────────────────────────────────────
@@ -491,6 +614,22 @@ app.post('/api/admin/bulk', adminAuth, async (req, res) => {
   }
 
   await saveDB(db);
+
+  if (affected > 0) {
+    const actionLabels = { ban: '🔨 Bulk Ban', unban: '✅ Bulk Unban', delete: '🗑️ Bulk Delete', reset: '🔄 Bulk Machine Reset', resetfails: '🔄 Bulk Fail Count Reset' };
+    const actionColors = { ban: 0xf05d7a, unban: 0x3ecf8e, delete: 0xf05d7a, reset: 0xf5a623, resetfails: 0xf5a623 };
+    sendDiscord(richEmbed({
+      title: actionLabels[action] || `⚙️ Bulk ${action}`,
+      description: `A bulk admin action was performed on **${affected}** license key(s).`,
+      color: actionColors[action] || 0x7c6af7,
+      fields: [
+        { name: '⚙️ Action',        value: action,                                                inline: true },
+        { name: '🔢 Keys Affected', value: String(affected),                                      inline: true },
+        { name: '🔑 Sample Keys',   value: keys.slice(0, 5).map(k => `\`${k}\``).join('\n') || '—', inline: false },
+      ]
+    }));
+  }
+
   return res.json({ success: true, message: `Bulk ${action}: ${affected} key(s) affected.`, affected });
 });
 
@@ -500,29 +639,77 @@ app.post('/api/admin/bulk', adminAuth, async (req, res) => {
 app.post('/api/admin/ban-hwid', adminAuth, async (req, res) => {
   const { hwidHash, keyToBanFrom } = req.body;
   const db = await loadDB(); let hash = hwidHash;
-  if (!hash && keyToBanFrom && db.licenses[keyToBanFrom]) hash = db.licenses[keyToBanFrom].hwidHash;
+  let linkedKey = null, linkedUser = null, linkedApp = null;
+  if (!hash && keyToBanFrom && db.licenses[keyToBanFrom]) {
+    hash = db.licenses[keyToBanFrom].hwidHash;
+    linkedKey  = keyToBanFrom;
+    linkedUser = db.licenses[keyToBanFrom].username;
+    const aid  = db.licenses[keyToBanFrom].appId;
+    linkedApp  = aid && db.applications[aid] ? db.applications[aid].name : null;
+  }
   if (!hash) return res.json({ success: false, message: 'No HWID hash.' });
   if (!db.bannedHWIDs.includes(hash)) db.bannedHWIDs.push(hash);
-  await saveDB(db); return res.json({ success: true, message: 'HWID banned.' });
+  await saveDB(db);
+  sendDiscord(richEmbed({
+    title: '🖥️ HWID Banned',
+    description: `A hardware ID has been added to the ban list. The associated machine will be blocked from all future authentication attempts.`,
+    color: 0xf05d7a,
+    fields: [
+      { name: '🔒 HWID Hash', value: `\`${hash.slice(0, 32)}...\``, inline: false },
+      ...(linkedKey  ? [{ name: '🔑 Linked Key',  value: `\`${linkedKey}\``,  inline: true }] : []),
+      ...(linkedUser ? [{ name: '👤 Username',     value: linkedUser,          inline: true }] : []),
+      ...(linkedApp  ? [{ name: '📦 Application',  value: linkedApp,           inline: true }] : []),
+    ]
+  }));
+  return res.json({ success: true, message: 'HWID banned.' });
 });
 
 app.post('/api/admin/unban-hwid', adminAuth, async (req, res) => {
   const { hwidHash } = req.body; const db = await loadDB();
   db.bannedHWIDs = db.bannedHWIDs.filter(h => h !== hwidHash);
-  await saveDB(db); return res.json({ success: true, message: 'HWID unbanned.' });
+  await saveDB(db);
+  sendDiscord(richEmbed({
+    title: '✅ HWID Unbanned',
+    description: `A hardware ID has been removed from the ban list.`,
+    color: 0x3ecf8e,
+    fields: [
+      { name: '🔓 HWID Hash', value: `\`${hwidHash.slice(0, 32)}...\``, inline: false },
+    ]
+  }));
+  return res.json({ success: true, message: 'HWID unbanned.' });
 });
 
 app.post('/api/admin/ban-ip', adminAuth, async (req, res) => {
   const { ip } = req.body; if (!ip) return res.json({ success: false, message: 'No IP.' });
   const db = await loadDB();
   if (!db.bannedIPs.includes(ip)) db.bannedIPs.push(ip);
-  await saveDB(db); return res.json({ success: true, message: `IP ${ip} banned.` });
+  await saveDB(db);
+  sendDiscord(richEmbed({
+    title: '🌐 IP Address Banned',
+    description: `An IP address has been added to the ban list. All requests from this address will be rejected.`,
+    color: 0xf05d7a,
+    fields: [
+      { name: '🚫 IP Address', value: `\`${ip}\``, inline: true },
+      { name: '📅 Banned At', value: `<t:${Math.floor(Date.now()/1000)}:F>`, inline: true },
+    ]
+  }));
+  return res.json({ success: true, message: `IP ${ip} banned.` });
 });
 
 app.post('/api/admin/unban-ip', adminAuth, async (req, res) => {
   const { ip } = req.body; const db = await loadDB();
   db.bannedIPs = db.bannedIPs.filter(i => i !== ip);
-  await saveDB(db); return res.json({ success: true, message: `IP ${ip} unbanned.` });
+  await saveDB(db);
+  sendDiscord(richEmbed({
+    title: '✅ IP Address Unbanned',
+    description: `An IP address has been removed from the ban list.`,
+    color: 0x3ecf8e,
+    fields: [
+      { name: '🔓 IP Address', value: `\`${ip}\``, inline: true },
+      { name: '📅 Unbanned At', value: `<t:${Math.floor(Date.now()/1000)}:F>`, inline: true },
+    ]
+  }));
+  return res.json({ success: true, message: `IP ${ip} unbanned.` });
 });
 
 app.get('/api/admin/banlists', adminAuth, async (req, res) => {
