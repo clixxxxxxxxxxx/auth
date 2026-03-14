@@ -7,30 +7,30 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#08080d;--surface:#0f0f17;--border:#1a1a2a;--accent:#7c6af7;--accent2:#3ecfcf;--danger:#f05d7a;--success:#3ecf8e;--text:#e8e8f0;--muted:#5a5a7a;--discord:#5865F2;}
+:root{--bg:#020408;--surface:#060d1a;--border:#0d1f3c;--accent:#1a6fff;--accent2:#4db8ff;--danger:#f05d7a;--success:#3ecf8e;--text:#c8d8f0;--muted:#3a5070;--discord:#5865F2;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;overflow:hidden;}
 
 /* Animated background */
 .bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;}
 .orb{position:absolute;border-radius:50%;filter:blur(80px);animation:orbFloat 8s ease-in-out infinite;}
-.orb1{width:500px;height:500px;background:radial-gradient(circle,rgba(124,106,247,0.12),transparent 70%);top:-100px;left:-100px;animation-delay:0s;}
-.orb2{width:400px;height:400px;background:radial-gradient(circle,rgba(62,207,207,0.08),transparent 70%);bottom:-80px;right:-80px;animation-delay:-3s;}
-.orb3{width:300px;height:300px;background:radial-gradient(circle,rgba(240,93,122,0.06),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-5s;}
+.orb1{width:500px;height:500px;background:radial-gradient(circle,rgba(26,111,255,0.12),transparent 70%);top:-100px;left:-100px;animation-delay:0s;}
+.orb2{width:400px;height:400px;background:radial-gradient(circle,rgba(77,184,255,0.08),transparent 70%);bottom:-80px;right:-80px;animation-delay:-3s;}
+.orb3{width:300px;height:300px;background:radial-gradient(circle,rgba(26,60,140,0.1),transparent 70%);top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-5s;}
 @keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1);}33%{transform:translate(20px,-15px) scale(1.05);}66%{transform:translate(-10px,20px) scale(0.97);}}.orb3{animation:orbFloat3 10s ease-in-out infinite;}
 @keyframes orbFloat3{0%,100%{transform:translate(-50%,-50%) scale(1);}50%{transform:translate(-50%,-50%) scale(1.1);}}
 
 /* Grid overlay */
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,106,247,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,247,0.03) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(26,111,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(26,111,255,0.03) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;z-index:0;}
 
 .card{background:rgba(15,15,23,0.85);backdrop-filter:blur(20px);border:1px solid var(--border);border-radius:24px;width:100%;max-width:460px;padding:40px;position:relative;z-index:1;overflow:hidden;animation:cardIn 0.6s cubic-bezier(0.34,1.2,0.64,1);}
 @keyframes cardIn{from{opacity:0;transform:translateY(30px) scale(0.97);}to{opacity:1;transform:translateY(0) scale(1);}}
-.card::before{content:'';position:absolute;top:-80px;right:-80px;width:240px;height:240px;background:radial-gradient(circle,rgba(88,101,242,0.07) 0%,transparent 70%);pointer-events:none;}
+.card::before{content:'';position:absolute;top:-80px;right:-80px;width:240px;height:240px;background:radial-gradient(circle,rgba(26,111,255,0.07) 0%,transparent 70%);pointer-events:none;}
 
 .logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
 .logo-icon{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;animation:logoPulse 3s ease-in-out infinite;overflow:hidden;}
 .logo-icon img{width:100%;height:100%;object-fit:contain;}
-@keyframes logoPulse{0%,100%{box-shadow:0 0 24px rgba(124,106,247,0.4);}50%{box-shadow:0 0 36px rgba(124,106,247,0.65);}}
+@keyframes logoPulse{0%,100%{box-shadow:0 0 24px rgba(26,111,255,0.5);}50%{box-shadow:0 0 40px rgba(77,184,255,0.7);}}
 .logo-name{font-size:26px;font-weight:800;letter-spacing:-0.5px;}
 .logo-name span{color:var(--accent);}
 
@@ -197,7 +197,7 @@ let currentState = null;
       if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(124,106,247,${p.a})`;
+      ctx.fillStyle = `rgba(26,111,255,${p.a})`;
       ctx.fill();
     });
     // draw connecting lines
@@ -209,7 +209,7 @@ let currentState = null;
           ctx.beginPath();
           ctx.moveTo(pts[i].x, pts[i].y);
           ctx.lineTo(pts[j].x, pts[j].y);
-          ctx.strokeStyle = `rgba(124,106,247,${0.08 * (1 - dist/120)})`;
+          ctx.strokeStyle = `rgba(26,111,255,${0.08 * (1 - dist/120)})`;
           ctx.lineWidth = 0.5;
           ctx.stroke();
         }
