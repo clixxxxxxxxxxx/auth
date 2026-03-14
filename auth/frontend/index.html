@@ -7,16 +7,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#0a0a0f;--surface:#111118;--border:#1e1e2e;--accent:#7c6af7;--accent2:#3ecfcf;--danger:#f05d7a;--success:#3ecf8e;--warn:#f5a623;--text:#e8e8f0;--muted:#5a5a7a;--mono:'DM Mono',monospace;--sans:'Syne',sans-serif;}
+:root{--bg:#020408;--surface:#060d1a;--border:#0d1f3c;--accent:#1a6fff;--accent2:#4db8ff;--danger:#f05d7a;--success:#3ecf8e;--warn:#f5a623;--text:#c8d8f0;--muted:#3a5070;--mono:'DM Mono',monospace;--sans:'Syne',sans-serif;}
 *{box-sizing:border-box;margin:0;padding:0;}
 body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,106,247,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,247,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(26,111,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(26,111,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
 
 /* LOGIN */
 #login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;background:var(--bg);}
 .login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px;width:440px;position:relative;overflow:hidden;}
-.login-card::before{content:'';position:absolute;top:-60px;left:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(124,106,247,0.2) 0%,transparent 70%);pointer-events:none;}
-.login-card::after{content:'';position:absolute;bottom:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(62,207,207,0.1) 0%,transparent 70%);pointer-events:none;}
+.login-card::before{content:'';position:absolute;top:-60px;left:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(26,111,255,0.2) 0%,transparent 70%);pointer-events:none;}
+.login-card::after{content:'';position:absolute;bottom:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(77,184,255,0.1) 0%,transparent 70%);pointer-events:none;}
 .logo{display:flex;align-items:center;gap:10px;margin-bottom:36px;}
 .logo-icon{width:42px;height:42px;border-radius:10px;display:flex;align-items:center;justify-content:center;overflow:hidden;}
 .logo-icon img{width:100%;height:100%;object-fit:contain;}
