@@ -125,7 +125,7 @@ function getWebhook(db, appId = null) {
 // ─────────────────────────────────────────────
 //  HELPERS
 // ─────────────────────────────────────────────
-function generateKey(prefix = 'VAULT') {
+function generateKey(prefix = 'VYRON') {
   const segs = [];
   for (let i = 0; i < 4; i++) segs.push(crypto.randomBytes(3).toString('hex').toUpperCase());
   return `${prefix}-${segs.join('-')}`;
@@ -459,7 +459,7 @@ app.post('/api/admin/discord/test', adminAuth, async (req, res) => {
 //  ADMIN — KEYS (single)
 // ─────────────────────────────────────────────
 app.post('/api/admin/generate', adminAuth, async (req, res) => {
-  const { count = 1, plan = 'standard', durationDays = null, prefix = 'VAULT', allowMultiple = false, note = '', appId = null } = req.body;
+  const { count = 1, plan = 'standard', durationDays = null, prefix = 'VYRON', allowMultiple = false, note = '', appId = null } = req.body;
   const db = await loadDB(); const keys = [];
   for (let i = 0; i < Math.min(count, 100); i++) {
     const key = generateKey(prefix);
