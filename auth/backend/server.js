@@ -772,7 +772,6 @@ app.get('/api/discord/oauth', (req, res) => {
   if (!CONFIG.DISCORD_CLIENT_ID || !CONFIG.DISCORD_REDIRECT_URI)
     return res.status(500).send('Discord OAuth not configured.');
   const state = crypto.randomBytes(16).toString('hex');
-  // Store state with a placeholder so we can validate it on callback
   oauthSessions.set(state, { createdAt: Date.now(), user: null });
   const params = new URLSearchParams({
     client_id:     CONFIG.DISCORD_CLIENT_ID,
@@ -787,8 +786,10 @@ app.get('/api/discord/oauth', (req, res) => {
 // GET /api/discord/callback — Discord redirects here after auth
 app.get('/api/discord/callback', async (req, res) => {
   const { code, state } = req.query;
+  const frontendUrl = process.env.FRONTEND_URL || 'https://dapper-tarsier-0a75ee.netlify.app';
+
   if (!code || !state || !oauthSessions.has(state))
-    return res.redirect('/link.html?error=invalid_state');
+    return res.redirect(`${frontendUrl}/link.html?error=invalid_state`);
 
   try {
     // Exchange code for token
@@ -825,10 +826,12 @@ app.get('/api/discord/callback', async (req, res) => {
       },
     });
 
-    res.redirect(`/link.html?state=${state}`);
+    const frontendUrl = process.env.FRONTEND_URL || 'https://dapper-tarsier-0a75ee.netlify.app';
+    res.redirect(`${frontendUrl}/link.html?state=${state}`);
   } catch (e) {
     console.error('Discord callback error:', e.message);
-    res.redirect('/link.html?error=server_error');
+    const frontendUrl = process.env.FRONTEND_URL || 'https://dapper-tarsier-0a75ee.netlify.app';
+    res.redirect(`${frontendUrl}/link.html?error=server_error`);
   }
 });
 
