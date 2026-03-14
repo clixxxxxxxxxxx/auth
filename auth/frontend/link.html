@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Link License — VaultAuth</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--surface:#111118;--border:#1e1e2e;--accent:#7c6af7;--accent2:#3ecfcf;--danger:#f05d7a;--success:#3ecf8e;--text:#e8e8f0;--muted:#5a5a7a;--discord:#5865F2;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,106,247,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,247,0.04) 1px,transparent 1px);background-size:32px 32px;pointer-events:none;}
+body::after{content:'';position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(124,106,247,0.08) 0%,transparent 60%);pointer-events:none;}
+
+.card{background:var(--surface);border:1px solid var(--border);border-radius:24px;width:100%;max-width:460px;padding:40px;position:relative;z-index:1;overflow:hidden;}
+.card::before{content:'';position:absolute;top:-80px;right:-80px;width:240px;height:240px;background:radial-gradient(circle,rgba(88,101,242,0.08) 0%,transparent 70%);pointer-events:none;}
+
+.logo{display:flex;align-items:center;gap:12px;margin-bottom:32px;}
+.logo-icon{width:46px;height:46px;background:linear-gradient(135deg,#7c6af7,#3ecfcf);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;}
+.logo-name{font-size:26px;font-weight:800;letter-spacing:-0.5px;}
+.logo-name span{color:var(--accent);}
+
+.headline{font-size:22px;font-weight:700;margin-bottom:6px;}
+.subline{font-size:13px;color:var(--muted);margin-bottom:32px;line-height:1.6;}
+
+/* Discord connect button */
+.btn-discord{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:14px;border-radius:12px;border:none;background:var(--discord);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;}
+.btn-discord:hover{background:#4752c4;transform:translateY(-1px);box-shadow:0 8px 24px rgba(88,101,242,0.35);}
+.btn-discord svg{width:22px;height:22px;flex-shrink:0;}
+
+/* Discord profile card */
+.discord-profile{display:none;align-items:center;gap:14px;background:rgba(88,101,242,0.08);border:1px solid rgba(88,101,242,0.25);border-radius:14px;padding:16px 18px;margin-bottom:24px;}
+.discord-profile.show{display:flex;}
+.discord-avatar{width:52px;height:52px;border-radius:50%;border:2px solid var(--discord);object-fit:cover;}
+.discord-info{flex:1;}
+.discord-name{font-size:15px;font-weight:700;color:var(--text);}
+.discord-tag{font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace;}
+.discord-badge{display:inline-flex;align-items:center;gap:4px;background:rgba(88,101,242,0.15);color:var(--discord);border:1px solid rgba(88,101,242,0.3);border-radius:100px;padding:2px 10px;font-size:10px;font-weight:700;margin-top:6px;}
+
+/* Form */
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+input{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:13px 16px;color:var(--text);font-family:'DM Mono',monospace;font-size:13px;outline:none;transition:border-color 0.2s,box-shadow 0.2s;letter-spacing:0.5px;}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,106,247,0.1);}
+input:disabled{opacity:0.4;cursor:not-allowed;}
+.hint{font-size:11px;color:var(--muted);margin-top:6px;}
+
+.btn-primary{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;}
+.btn-primary:hover:not(:disabled){background:#6a59e0;transform:translateY(-1px);box-shadow:0 8px 24px rgba(124,106,247,0.3);}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed;}
+
+.status-msg{padding:14px 16px;border-radius:12px;font-size:13px;font-weight:600;margin-bottom:16px;display:none;}
+.status-msg.error{background:rgba(240,93,122,0.1);color:var(--danger);border:1px solid rgba(240,93,122,0.2);}
+.status-msg.success{background:rgba(62,207,142,0.1);color:var(--success);border:1px solid rgba(62,207,142,0.2);}
+.status-msg.info{background:rgba(124,106,247,0.1);color:var(--accent);border:1px solid rgba(124,106,247,0.2);}
+
+/* Divider */
+.divider{display:flex;align-items:center;gap:12px;margin:24px 0;color:var(--muted);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* Success */
+.success-card{display:none;text-align:center;padding:20px 0;}
+.success-icon{width:80px;height:80px;background:rgba(62,207,142,0.1);border:2px solid var(--success);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;margin:0 auto 24px;animation:popIn 0.5s cubic-bezier(0.34,1.56,0.64,1);}
+@keyframes popIn{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+.success-title{font-size:22px;font-weight:800;color:var(--success);margin-bottom:8px;}
+.success-sub{font-size:13px;color:var(--muted);line-height:1.6;}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px;}
+.info-item{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:left;}
+.info-item-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:4px;}
+.info-item-value{font-size:13px;font-family:'DM Mono',monospace;color:var(--text);}
+
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.powered{text-align:center;font-size:11px;color:var(--muted);margin-top:24px;}
+.powered a{color:var(--accent);text-decoration:none;}
+
+/* Step indicator */
+.steps{display:flex;align-items:center;gap:0;margin-bottom:32px;}
+.step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;position:relative;}
+.step:not(:last-child)::after{content:'';position:absolute;top:16px;left:50%;width:100%;height:1px;background:var(--border);z-index:0;}
+.step.done::after{background:var(--accent);}
+.step-dot{width:32px;height:32px;border-radius:50%;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;background:var(--surface);position:relative;z-index:1;color:var(--muted);transition:all 0.3s;}
+.step.active .step-dot{border-color:var(--accent);background:rgba(124,106,247,0.1);color:var(--accent);}
+.step.done .step-dot{border-color:var(--success);background:var(--success);color:#000;}
+.step-label{font-size:10px;color:var(--muted);font-weight:600;}
+.step.active .step-label{color:var(--accent);}
+.step.done .step-label{color:var(--success);}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🔐</div>
+    <div class="logo-name">Vault<span>Auth</span></div>
+  </div>
+
+  <div class="headline">Link Your License</div>
+  <div class="subline">Connect your Discord account, then enter your license key to activate it. This can only be done once per key.</div>
+
+  <!-- Steps -->
+  <div class="steps">
+    <div class="step active" id="step1"><div class="step-dot">1</div><div class="step-label">Discord</div></div>
+    <div class="step" id="step2"><div class="step-dot">2</div><div class="step-label">Link Key</div></div>
+    <div class="step" id="step3"><div class="step-dot">3</div><div class="step-label">Done</div></div>
+  </div>
+
+  <div id="status-msg" class="status-msg"></div>
+
+  <div id="main-section">
+    <!-- Discord profile (shown after OAuth) -->
+    <div class="discord-profile" id="discord-profile">
+      <img class="discord-avatar" id="discord-avatar" src="" alt="Avatar"/>
+      <div class="discord-info">
+        <div class="discord-name" id="discord-name"></div>
+        <div class="discord-tag" id="discord-tag"></div>
+        <div class="discord-badge">✓ Connected</div>
+      </div>
+    </div>
+
+    <!-- Connect Discord (shown before OAuth) -->
+    <div id="connect-section">
+      <button class="btn-discord" id="discord-btn" onclick="connectDiscord()">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z"/></svg>
+        Connect with Discord
+      </button>
+    </div>
+
+    <!-- Key input (shown after Discord connected) -->
+    <div id="key-section" style="display:none">
+      <div class="divider">Enter Your Key</div>
+      <div class="field">
+        <label>License Key</label>
+        <input type="text" id="key-input" placeholder="VAULT-XXXXXX-XXXXXX-XXXXXX"
+          oninput="formatKey(this)" autocomplete="off" spellcheck="false"/>
+        <div class="hint">Format: PREFIX-XXXXXX-XXXXXX-XXXXXX</div>
+      </div>
+      <button class="btn-primary" id="link-btn" onclick="doLink()">
+        Link License →
+      </button>
+    </div>
+  </div>
+
+  <!-- Success -->
+  <div class="success-card" id="success-card">
+    <div class="success-icon">✓</div>
+    <div class="success-title">License Linked!</div>
+    <div class="success-sub">Your license is now tied to your Discord account.<br/>Launch your application to get started.</div>
+    <div class="info-grid" id="success-info"></div>
+  </div>
+
+  <div class="powered">Secured by <a href="#">VaultAuth</a></div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+//  CONFIGURE — set to your deployed server URL
+// ══════════════════════════════════════════════
+const SERVER_URL = 'https://auth-production-0379.up.railway.app';
+// ══════════════════════════════════════════════
+
+let currentState = null;
+
+function setStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('step' + i);
+    el.classList.remove('active', 'done');
+    if (i < n) { el.classList.add('done'); el.querySelector('.step-dot').textContent = '✓'; }
+    else if (i === n) el.classList.add('active');
+  }
+}
+
+function showStatus(msg, type) {
+  const el = document.getElementById('status-msg');
+  el.textContent = msg;
+  el.className = 'status-msg ' + type;
+  el.style.display = 'block';
+}
+
+function hideStatus() {
+  document.getElementById('status-msg').style.display = 'none';
+}
+
+function formatKey(input) {
+  let val = input.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const parts = [];
+  if (val.length > 0)  parts.push(val.slice(0, 5));
+  if (val.length > 5)  parts.push(val.slice(5, 11));
+  if (val.length > 11) parts.push(val.slice(11, 17));
+  if (val.length > 17) parts.push(val.slice(17, 23));
+  input.value = parts.join('-');
+}
+
+function connectDiscord() {
+  const params = new URLSearchParams({
+    client_id:     '1482484114618716354',
+    response_type: 'code',
+    redirect_uri:  `${SERVER_URL}/api/discord/callback`,
+    scope:         'identify',
+  });
+  window.location.href = `https://discord.com/oauth2/authorize?${params}`;
+}
+
+async function loadDiscordSession(state) {
+  try {
+    const r = await fetch(`${SERVER_URL}/api/discord/session?state=${state}`);
+    const d = await r.json();
+    if (!d.success) {
+      showStatus('Discord session expired. Please try again.', 'error');
+      return;
+    }
+    showDiscordProfile(d.user);
+    currentState = state;
+  } catch (e) {
+    showStatus('Could not load Discord session.', 'error');
+  }
+}
+
+function showDiscordProfile(user) {
+  document.getElementById('discord-avatar').src = user.avatar;
+  document.getElementById('discord-name').textContent = user.username;
+  document.getElementById('discord-tag').textContent = `ID: ${user.id || ''}`;
+  document.getElementById('discord-profile').classList.add('show');
+  document.getElementById('connect-section').style.display = 'none';
+  document.getElementById('key-section').style.display = 'block';
+  setStep(2);
+  hideStatus();
+}
+
+async function doLink() {
+  hideStatus();
+  const key = document.getElementById('key-input').value.trim();
+  if (!key) { showStatus('Please enter your license key.', 'error'); return; }
+  if (!currentState) { showStatus('Discord session missing. Please reconnect.', 'error'); return; }
+
+  const btn = document.getElementById('link-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span> Linking...';
+
+  try {
+    const r = await fetch(`${SERVER_URL}/api/link-license`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key, state: currentState }),
+    });
+    const d = await r.json();
+
+    if (!d.success) {
+      showStatus(d.message || 'Linking failed.', 'error');
+      btn.disabled = false;
+      btn.innerHTML = 'Link License →';
+      return;
+    }
+
+    setStep(3);
+    document.getElementById('main-section').style.display = 'none';
+    const sc = document.getElementById('success-card');
+    sc.style.display = 'block';
+
+    document.getElementById('success-info').innerHTML = `
+      <div class="info-item">
+        <div class="info-item-label">Username</div>
+        <div class="info-item-value">${d.data.username}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">Plan</div>
+        <div class="info-item-value">${d.data.plan}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">Expires</div>
+        <div class="info-item-value">${d.data.expiresAt ? d.data.expiresAt.slice(0,10) : 'Lifetime'}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-item-label">Discord</div>
+        <div class="info-item-value">${document.getElementById('discord-name').textContent}</div>
+      </div>`;
+  } catch (e) {
+    showStatus('Could not reach the server. Check your connection.', 'error');
+    btn.disabled = false;
+    btn.innerHTML = 'Link License →';
+  }
+}
+
+// On page load — check for state or error in URL params
+(function init() {
+  const params = new URLSearchParams(window.location.search);
+  const state  = params.get('state');
+  const error  = params.get('error');
+
+  if (error) {
+    const msgs = {
+      invalid_state: 'OAuth state mismatch. Please try again.',
+      token_failed:  'Failed to get Discord token. Please try again.',
+      user_failed:   'Failed to fetch Discord profile. Please try again.',
+      server_error:  'Server error during OAuth. Please try again.',
+    };
+    showStatus(msgs[error] || 'An error occurred. Please try again.', 'error');
+    return;
+  }
+
+  if (state) {
+    loadDiscordSession(state);
+    // Clean URL
+    window.history.replaceState({}, '', '/link.html');
+  }
+})();
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && currentState) doLink();
+});
+</script>
+</body>
+</html>
