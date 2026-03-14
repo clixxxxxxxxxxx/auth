@@ -209,7 +209,6 @@ tr:hover td{background:rgba(255,255,255,0.02);}
     <div class="nav-item" onclick="showPage('bans')"><span class="icon">🚫</span> Ban Manager</div>
     <div class="nav-section">Tools</div>
     <div class="nav-item" onclick="showPage('register')"><span class="icon">📋</span> Registration Page</div>
-    <div class="nav-item" onclick="showPage('docs')"><span class="icon">⌨</span> C++ Integration</div>
     <div class="sidebar-bottom">
       <div class="server-url-badge" id="sidebar-url">Not connected</div>
       <button class="btn btn-ghost btn-full" onclick="doLogout()" style="font-size:12px">Sign Out</button>
@@ -368,7 +367,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 
     <!-- REGISTER -->
     <div class="page" id="page-register">
-      <div class="page-header"><div><div class="page-title">Registration Page</div><div class="page-sub">Share this URL with customers</div></div></div>
+      <div class="page-header"><div><div class="page-title">Registration Page</div><div class="page-sub">Share this URL with customers to link their license</div></div></div>
       <div class="panel">
         <div class="panel-header">Shareable Link</div>
         <div class="panel-body">
@@ -377,36 +376,8 @@ tr:hover td{background:rgba(255,255,255,0.02);}
             <button class="btn btn-primary" onclick="copyRegisterUrl()">Copy</button>
           </div>
           <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-            <iframe src="register.html" style="width:100%;height:480px;border:none;background:var(--bg)"></iframe>
+            <iframe src="https://dapper-tarsier-0a75ee.netlify.app/link.html" style="width:100%;height:480px;border:none;background:var(--bg)"></iframe>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- DOCS -->
-    <div class="page" id="page-docs">
-      <div class="page-header"><div><div class="page-title">C++ Integration</div><div class="page-sub">Drop-in SDK — copy vaultauth.hpp into your project</div></div></div>
-      <div class="panel">
-        <div class="panel-header">Setup (with Application credentials)</div>
-        <div class="panel-body">
-          <p style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:20px">
-            Every C++ project now requires an <strong>App ID</strong> and <strong>App Secret</strong> from the Applications page.
-            This ties your licenses to a specific project and prevents key sharing across applications.
-          </p>
-          <div class="code-block">
-<span style="color:#89b4fa">#include</span> <span style="color:#a6e3a1">"vaultauth.hpp"</span>
-
-<span style="color:#89b4fa">int</span> <span style="color:#cba6f7">main</span>() {
-    <span style="color:#6c7086">// Required: set your server + app credentials</span>
-    VaultAuth::setServerUrl(<span style="color:#a6e3a1">"https://auth-production-0379.up.railway.app"</span>);
-    VaultAuth::setAppId(<span style="color:#a6e3a1">"APP-XXXXXXXX"</span>);      <span style="color:#6c7086">// from Applications page</span>
-    VaultAuth::setAppSecret(<span style="color:#a6e3a1">"your-app-secret"</span>); <span style="color:#6c7086">// from Applications page</span>
-    VaultAuth::setSSLVerify(<span style="color:#89b4fa">false</span>);
-
-    <span style="color:#89b4fa">if</span> (!VaultAuth::init()) <span style="color:#89b4fa">return</span> 1;
-
-    <span style="color:#6c7086">// your app here...</span>
-}</div>
         </div>
       </div>
     </div>
@@ -444,7 +415,7 @@ async function doLogin() {
     if (!d.success) throw new Error('bad');
     SERVER_URL = url; ADMIN_SECRET = secret;
     document.getElementById('sidebar-url').textContent = url;
-    document.getElementById('register-url-display').value = `${url}/register.html`;
+    document.getElementById('register-url-display').value = `https://dapper-tarsier-0a75ee.netlify.app/link.html`;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     err.style.display = 'none';
