@@ -287,6 +287,8 @@ app.post('/api/verify', authLimiter, appAuth, async (req, res) => {
       username: license.username, plan: license.plan || 'standard',
       expiresAt: license.expiresAt || null, activatedAt: license.activatedAt,
       appName: appCfg.name, sessionToken, sessionPayload,
+      discordUsername: license.discordUsername || null,
+      discordAvatar: license.discordAvatar || null,
     }
   });
 });
@@ -536,6 +538,16 @@ app.post('/api/admin/reset/:key', adminAuth, async (req, res) => {
   db.activations[req.params.key].push({ event: 'admin_reset', timestamp: nowISO() });
   await saveDB(db);
   return res.json({ success: true, message: 'Machine binding cleared.' });
+});
+
+app.post('/api/admin/reset-discord/:key', adminAuth, async (req, res) => {
+  const db = await loadDB(); const lic = db.licenses[req.params.key];
+  if (!lic) return res.json({ success: false, message: 'Not found.' });
+  lic.discordId = null; lic.discordUsername = null; lic.discordAvatar = null; lic.linkedAt = null;
+  if (!db.activations[req.params.key]) db.activations[req.params.key] = [];
+  db.activations[req.params.key].push({ event: 'discord_reset', timestamp: nowISO() });
+  await saveDB(db);
+  return res.json({ success: true, message: 'Discord link cleared. Key can be re-linked.' });
 });
 
 app.post('/api/admin/ban/:key', adminAuth, async (req, res) => {
@@ -790,10 +802,6 @@ app.get('/api/discord/callback', async (req, res) => {
 
   if (!code || !state || !oauthSessions.has(state))
     return res.redirect(`${frontendUrl}/link.html?error=invalid_state`);
-
-  try {
-    // Exchange code for token
-    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
@@ -805,14 +813,20 @@ app.get('/api/discord/callback', async (req, res) => {
       }),
     });
     const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) return res.redirect('/link.html?error=token_failed');
+    if (!tokenData.access_token) {
+      console.error('Discord token exchange failed:', JSON.stringify(tokenData));
+      return res.redirect(`${frontendUrl}/link.html?error=token_failed`);
+    }
 
     // Fetch user profile
     const userRes = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` },
     });
     const user = await userRes.json();
-    if (!user.id) return res.redirect('/link.html?error=user_failed');
+    if (!user.id) {
+      console.error('Discord user fetch failed:', JSON.stringify(user));
+      return res.redirect(`${frontendUrl}/link.html?error=user_failed`);
+    }
 
     // Store user in session keyed by state
     oauthSessions.set(state, {
@@ -826,7 +840,6 @@ app.get('/api/discord/callback', async (req, res) => {
       },
     });
 
-    const frontendUrl = process.env.FRONTEND_URL || 'https://dapper-tarsier-0a75ee.netlify.app';
     res.redirect(`${frontendUrl}/link.html?state=${state}`);
   } catch (e) {
     console.error('Discord callback error:', e.message);
