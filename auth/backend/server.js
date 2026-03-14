@@ -802,6 +802,9 @@ app.get('/api/discord/callback', async (req, res) => {
 
   if (!code || !state || !oauthSessions.has(state))
     return res.redirect(`${frontendUrl}/link.html?error=invalid_state`);
+
+  try {
+    const tokenRes = await fetch('https://discord.com/api/oauth2/token', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
