@@ -378,7 +378,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
             <button class="btn btn-primary" onclick="copyRegisterUrl()">Copy</button>
           </div>
           <div style="border:1px solid var(--border);border-radius:12px;overflow:hidden;">
-            <iframe src="https://dapper-tarsier-0a75ee.netlify.app/link.html" style="width:100%;height:480px;border:none;background:var(--bg)"></iframe>
+            <iframe src="https://auth-pwhf.onrender.com/link.html" style="width:100%;height:480px;border:none;background:var(--bg)"></iframe>
           </div>
         </div>
       </div>
@@ -417,7 +417,7 @@ async function doLogin() {
     if (!d.success) throw new Error('bad');
     SERVER_URL = url; ADMIN_SECRET = secret;
     document.getElementById('sidebar-url').textContent = url;
-    document.getElementById('register-url-display').value = `https://dapper-tarsier-0a75ee.netlify.app/link.html`;
+    document.getElementById('register-url-display').value = `https://auth-pwhf.onrender.com/link.html`;
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     err.style.display = 'none';
