@@ -316,7 +316,7 @@ async function doLink() {
     const msgs = { invalid_state:'OAuth state mismatch. Please try again.', token_failed:'Failed to get Discord token. Please try again.', user_failed:'Failed to fetch Discord profile. Please try again.', server_error:'Server error during OAuth. Please try again.' };
     showStatus(msgs[error] || 'An error occurred. Please try again.', 'error'); return;
   }
-  if (state) { loadDiscordSession(state); window.history.replaceState({}, '', '/link.html'); }
+  if (state) { loadDiscordSession(state); window.history.replaceState({}, '', '/link'); }
 })();
 
 document.addEventListener('keydown', e => { if (e.key === 'Enter' && currentState) doLink(); });
