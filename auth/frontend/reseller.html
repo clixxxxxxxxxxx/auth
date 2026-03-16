@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>VyronAuth — Reseller Portal</title>
+<link rel="icon" type="image/png" href="https://i.postimg.cc/sg1c5BB4/Vyron-Clear.webp"/>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#010306;--surface:#040a14;--border:#0a1a30;--accent:#1558d6;--accent2:#3a9fe0;--danger:#f05d7a;--success:#3ecf8e;--warn:#f5a623;--text:#b8ccec;--muted:#2e4460;--mono:'DM Mono',monospace;--sans:'Syne',sans-serif;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(26,111,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(26,111,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+input[type=text],input[type=password],input[type=number],select{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 16px;color:var(--text);font-family:var(--mono);font-size:13px;outline:none;transition:border-color 0.2s;}
+input:focus,select:focus{border-color:var(--accent);}
+select option{background:var(--surface);}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:10px;border:none;font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:#6a59e0;transform:translateY(-1px);}
+.btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);}
+.btn-ghost:hover{color:var(--text);border-color:var(--accent);}
+.btn-full{width:100%;justify-content:center;}
+.btn-sm{padding:6px 12px;font-size:11px;}
+
+/* LOGIN */
+#login-screen{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:100;background:var(--bg);}
+.login-card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:48px;width:420px;position:relative;overflow:hidden;}
+.login-card::before{content:'';position:absolute;top:-60px;left:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(26,111,255,0.2) 0%,transparent 70%);pointer-events:none;}
+.logo{display:flex;align-items:center;gap:10px;margin-bottom:36px;}
+.logo-icon{width:42px;height:42px;border-radius:10px;overflow:hidden;}
+.logo-icon img{width:100%;height:100%;object-fit:contain;}
+.logo-text{font-size:24px;font-weight:800;letter-spacing:-0.5px;}
+.logo-text span{color:var(--accent);}
+
+/* DASHBOARD */
+#dashboard{display:none;min-height:100vh;position:relative;z-index:1;}
+.topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 40px;display:flex;align-items:center;justify-content:space-between;}
+.topbar-logo{display:flex;align-items:center;gap:10px;}
+.topbar-logo .logo-icon{width:32px;height:32px;}
+.topbar-logo .logo-text{font-size:18px;font-weight:800;}
+.topbar-right{display:flex;align-items:center;gap:16px;}
+.credit-badge{background:rgba(62,207,142,0.1);border:1px solid rgba(62,207,142,0.25);border-radius:8px;padding:6px 14px;font-family:var(--mono);font-size:13px;font-weight:700;color:var(--success);}
+.username-badge{font-size:13px;color:var(--muted);}
+.main{max-width:900px;margin:0 auto;padding:40px;}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:24px;}
+.panel-header{padding:18px 24px;border-bottom:1px solid var(--border);font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:space-between;}
+.panel-body{padding:24px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:20px 24px;}
+.stat-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.stat-value{font-size:28px;font-weight:800;font-family:var(--mono);}
+.stat-card.green .stat-value{color:var(--success);}
+.stat-card.blue .stat-value{color:var(--accent2);}
+.stat-card.purple .stat-value{color:var(--accent);}
+.price-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px;}
+.price-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;cursor:pointer;transition:all 0.15s;}
+.price-card:hover,.price-card.selected{border-color:var(--accent);background:rgba(21,88,214,0.08);}
+.price-card .dur{font-size:14px;font-weight:700;margin-bottom:4px;}
+.price-card .price{font-size:12px;font-family:var(--mono);color:var(--accent2);}
+.key-output{background:var(--bg);border:1px solid var(--accent);border-radius:10px;padding:16px;font-family:var(--mono);font-size:12px;color:var(--accent2);word-break:break-all;margin-top:16px;max-height:200px;overflow-y:auto;line-height:2;}
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;padding:10px 14px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);}
+td{padding:11px 14px;border-bottom:1px solid rgba(30,30,46,0.5);font-family:var(--mono);font-size:11px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+.empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px;}
+#toast{position:fixed;bottom:24px;right:24px;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 20px;font-size:13px;font-weight:600;z-index:300;transform:translateY(80px);opacity:0;transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1);max-width:340px;display:flex;align-items:center;gap:10px;}
+#toast.show{transform:translateY(0);opacity:1;}
+#toast.success{border-color:var(--success);color:var(--success);}
+#toast.error{border-color:var(--danger);color:var(--danger);}
+#toast.info{border-color:var(--accent);color:var(--accent);}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="logo">
+      <div class="logo-icon"><img src="https://i.postimg.cc/sg1c5BB4/Vyron-Clear.webp" alt="Vyron"/></div>
+      <div class="logo-text">Vyron<span>Auth</span></div>
+    </div>
+    <div style="font-size:18px;font-weight:600;margin-bottom:6px">Reseller Portal</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:28px">Sign in to generate license keys.</div>
+    <div class="field"><label>Username</label><input type="text" id="login-user" placeholder="Your reseller username"/></div>
+    <div class="field"><label>Password</label><input type="password" id="login-pass" placeholder="Your password"/></div>
+    <div id="login-err" style="color:var(--danger);font-size:12px;margin-bottom:12px;display:none"></div>
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Sign In →</button>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div class="logo-icon"><img src="https://i.postimg.cc/sg1c5BB4/Vyron-Clear.webp" alt="Vyron"/></div>
+      <div class="logo-text">Vyron<span style="color:var(--accent)">Auth</span> <span style="font-size:13px;font-weight:400;color:var(--muted)">Reseller</span></div>
+    </div>
+    <div class="topbar-right">
+      <span class="username-badge" id="topbar-user"></span>
+      <span class="credit-badge" id="topbar-credits">$0.00</span>
+      <button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="stats-row">
+      <div class="stat-card green"><div class="stat-label">Credits Balance</div><div class="stat-value" id="stat-credits">$0.00</div></div>
+      <div class="stat-card blue"><div class="stat-label">Keys Generated</div><div class="stat-value" id="stat-keys">0</div></div>
+      <div class="stat-card purple"><div class="stat-label">Account</div><div class="stat-value" style="font-size:18px;padding-top:4px" id="stat-user">—</div></div>
+    </div>
+
+    <!-- GENERATE -->
+    <div class="panel">
+      <div class="panel-header">Generate Keys</div>
+      <div class="panel-body">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Select a duration — credits are deducted at reseller pricing (20% off retail).</div>
+        <div class="price-grid" id="price-grid">
+          <div class="price-card selected" data-dur="1"    onclick="selectDur(this)"><div class="dur">1 Day</div><div class="price">$3.19/key</div></div>
+          <div class="price-card"          data-dur="3"    onclick="selectDur(this)"><div class="dur">3 Days</div><div class="price">$5.59/key</div></div>
+          <div class="price-card"          data-dur="7"    onclick="selectDur(this)"><div class="dur">7 Days</div><div class="price">$10.39/key</div></div>
+          <div class="price-card"          data-dur="30"   onclick="selectDur(this)"><div class="dur">30 Days</div><div class="price">$23.99/key</div></div>
+          <div class="price-card"          data-dur="lifetime" onclick="selectDur(this)"><div class="dur">Lifetime</div><div class="price">$39.99/key</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div class="field" style="margin:0">
+            <label>Quantity (1–50)</label>
+            <input type="number" id="gen-qty" value="1" min="1" max="50" oninput="updateCostPreview()"/>
+          </div>
+          <div class="field" style="margin:0">
+            <label>Total Cost</label>
+            <input type="text" id="gen-cost" readonly style="opacity:0.7;cursor:not-allowed" value="$3.19"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="generateKeys()">✦ Generate Keys</button>
+        <div id="gen-output" style="display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;margin-bottom:8px">
+            <div style="font-weight:700;font-size:14px">Generated Keys</div>
+            <button class="btn btn-ghost btn-sm" onclick="copyKeys()">Copy All</button>
+          </div>
+          <div class="key-output" id="gen-keys-display"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="panel">
+      <div class="panel-header">Generation History <button class="btn btn-ghost btn-sm" onclick="loadHistory()">↺ Refresh</button></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Date</th><th>Duration</th><th>Qty</th><th>Cost</th><th>Keys</th></tr></thead>
+          <tbody id="history-tbody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SERVER = 'https://auth-production-0379.up.railway.app';
+const PRICES = { 1: 3.19, 3: 5.59, 7: 10.39, 30: 23.99, lifetime: 39.99 };
+
+let session = null; // { id, username, password, credits, keysGenerated }
+let selectedDur = '1';
+
+function toast(msg, type='info') {
+  const t = document.getElementById('toast');
+  const icons = { success:'✓', error:'✕', info:'ℹ' };
+  t.innerHTML = `<span>${icons[type]}</span> ${msg}`;
+  t.className = `show ${type}`;
+  setTimeout(() => t.className = '', 3500);
+}
+
+async function doLogin() {
+  const username = document.getElementById('login-user').value.trim();
+  const password = document.getElementById('login-pass').value.trim();
+  const err = document.getElementById('login-err');
+  if (!username || !password) { err.textContent='Fill in all fields.'; err.style.display='block'; return; }
+  try {
+    const r = await fetch(`${SERVER}/api/reseller/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    const d = await r.json();
+    if (!d.success) { err.textContent = d.message; err.style.display='block'; return; }
+    session = { id: d.id, username: d.username, password, credits: d.credits, keysGenerated: d.keysGenerated };
+    err.style.display = 'none';
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    updateUI();
+    loadHistory();
+  } catch(e) { err.textContent = 'Connection failed.'; err.style.display='block'; }
+}
+
+function doLogout() {
+  session = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('dashboard').style.display = 'none';
+  document.getElementById('login-pass').value = '';
+}
+
+function updateUI() {
+  if (!session) return;
+  document.getElementById('topbar-user').textContent = session.username;
+  document.getElementById('topbar-credits').textContent = `$${session.credits.toFixed(2)}`;
+  document.getElementById('stat-credits').textContent = `$${session.credits.toFixed(2)}`;
+  document.getElementById('stat-keys').textContent = session.keysGenerated || 0;
+  document.getElementById('stat-user').textContent = session.username;
+}
+
+function selectDur(el) {
+  document.querySelectorAll('.price-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedDur = el.dataset.dur;
+  updateCostPreview();
+}
+
+function updateCostPreview() {
+  const qty = Math.min(Math.max(parseInt(document.getElementById('gen-qty').value) || 1, 1), 50);
+  const price = PRICES[selectedDur === 'lifetime' ? 'lifetime' : parseInt(selectedDur)] || 0;
+  document.getElementById('gen-cost').value = `$${(price * qty).toFixed(2)}`;
+}
+
+async function generateKeys() {
+  if (!session) return;
+  const qty = Math.min(Math.max(parseInt(document.getElementById('gen-qty').value) || 1, 1), 50);
+  const price = PRICES[selectedDur === 'lifetime' ? 'lifetime' : parseInt(selectedDur)] || 0;
+  const total = (price * qty).toFixed(2);
+  if (!confirm(`Generate ${qty} key(s) for ${selectedDur === 'lifetime' ? 'Lifetime' : selectedDur + ' day(s)'}?\nCost: $${total}`)) return;
+
+  try {
+    const r = await fetch(`${SERVER}/api/reseller/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resellerId: session.id, resellerPassword: session.password, duration: selectedDur, count: qty })
+    });
+    const d = await r.json();
+    if (!d.success) { toast(d.message, 'error'); return; }
+    session.credits = d.creditsRemaining;
+    session.keysGenerated = (session.keysGenerated || 0) + qty;
+    updateUI();
+    document.getElementById('gen-output').style.display = 'block';
+    document.getElementById('gen-keys-display').innerHTML = d.keys.map(k => `<div style="padding:4px 0">${k}</div>`).join('');
+    toast(`Generated ${d.keys.length} key(s) — $${d.creditsUsed.toFixed(2)} deducted`, 'success');
+    loadHistory();
+  } catch(e) { toast('Request failed: ' + e.message, 'error'); }
+}
+
+function copyKeys() {
+  const keys = [...document.querySelectorAll('#gen-keys-display div')].map(d => d.textContent).join('\n');
+  navigator.clipboard.writeText(keys).then(() => toast('Keys copied!', 'success'));
+}
+
+async function loadHistory() {
+  if (!session) return;
+  try {
+    const r = await fetch(`${SERVER}/api/reseller/history`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ resellerId: session.id, resellerPassword: session.password })
+    });
+    const d = await r.json();
+    const tbody = document.getElementById('history-tbody');
+    if (!d.success || !d.history.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No history yet</td></tr>';
+      return;
+    }
+    tbody.innerHTML = d.history.map(h => `
+      <tr>
+        <td style="color:var(--muted)">${h.at?.slice(0,16).replace('T',' ')||'—'}</td>
+        <td>${h.duration === 'lifetime' ? 'Lifetime' : h.duration + ' day(s)'}</td>
+        <td>${h.qty}</td>
+        <td style="color:var(--success)">$${h.total.toFixed(2)}</td>
+        <td>
+          <button class="btn btn-ghost btn-sm" onclick="showHistoryKeys(${JSON.stringify(h.keys).replace(/"/g,'&quot;')})">View Keys</button>
+        </td>
+      </tr>`).join('');
+  } catch(e) { /* silent */ }
+}
+
+function showHistoryKeys(keys) {
+  const text = Array.isArray(keys) ? keys.join('\n') : keys;
+  const win = window.open('', '_blank', 'width=500,height=400');
+  win.document.write(`<pre style="font-family:monospace;padding:20px;background:#010306;color:#3a9fe0;font-size:13px">${text}</pre>`);
+}
+</script>
+</body>
+</html>
