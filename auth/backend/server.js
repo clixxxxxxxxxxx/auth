@@ -930,14 +930,8 @@ app.get('/link', (req, res) => res.sendFile(path.join(__dirname, '../frontend/li
 const multer = require('multer');
 const fs     = require('fs');
 
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename:    (req, file, cb) => cb(null, `app_${req.params.id}.exe`),
-});
-const upload = multer({ storage, limits: { fileSize: 200 * 1024 * 1024 } }); // 200 MB max
+// Store in memory — we'll base64 encode into the DB so it survives Railway redeploys
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 200 * 1024 * 1024 } });
 
 // Admin uploads a new binary + sets version/status
 app.post('/api/admin/apps/set-update/:id', adminAuth, upload.single('binary'), async (req, res) => {
@@ -946,22 +940,28 @@ app.post('/api/admin/apps/set-update/:id', adminAuth, upload.single('binary'), a
   const { latestVersion, appStatus } = req.body;
   if (latestVersion !== undefined) a.latestVersion = latestVersion;
   if (appStatus     !== undefined) a.appStatus     = appStatus;
-  // If a file was uploaded, set the download URL to our self-hosted endpoint
   if (req.file) {
-    const proto = req.headers['x-forwarded-proto'] || req.protocol;
-    const host  = req.headers['x-forwarded-host']  || req.get('host');
+    // Store binary as base64 in the DB — survives redeploys, no disk needed
+    a.binaryB64   = req.file.buffer.toString('base64');
+    a.binarySize  = req.file.size;
+    const proto   = req.headers['x-forwarded-proto'] || req.protocol;
+    const host    = req.headers['x-forwarded-host']  || req.get('host');
     a.downloadUrl = `${proto}://${host}/api/app/download/${req.params.id}`;
     a.hasUpload   = true;
   }
   await saveDB(db);
-  return res.json({ success: true, message: req.file ? 'Binary uploaded and update info saved.' : 'Update info saved.', app: a });
+  return res.json({ success: true, message: req.file ? `Binary uploaded (${(req.file.size/1024).toFixed(0)} KB) and saved.` : 'Update info saved.', app: a });
 });
 
-// Public — serves the stored binary for a given app
+// Public — serves the stored binary decoded from base64 in DB
 app.get('/api/app/download/:id', async (req, res) => {
-  const filePath = path.join(uploadDir, `app_${req.params.id}.exe`);
-  if (!fs.existsSync(filePath)) return res.status(404).json({ success: false, message: 'No binary uploaded for this app.' });
-  res.download(filePath, `loader_${req.params.id}.exe`);
+  const db = await loadDB(); const a = db.applications[req.params.id];
+  if (!a || !a.binaryB64) return res.status(404).json({ success: false, message: 'No binary uploaded for this app.' });
+  const buf = Buffer.from(a.binaryB64, 'base64');
+  res.setHeader('Content-Type', 'application/octet-stream');
+  res.setHeader('Content-Disposition', `attachment; filename="loader_update.exe"`);
+  res.setHeader('Content-Length', buf.length);
+  res.send(buf);
 });
 
 // Public endpoint — C++ client calls this to check for updates
