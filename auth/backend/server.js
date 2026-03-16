@@ -929,8 +929,25 @@ app.get('/link', (req, res) => res.sendFile(path.join(__dirname, '../frontend/li
 // ─────────────────────────────────────────────
 const multer = require('multer');
 const fs     = require('fs');
+const path_m = require('path');
 
-// Store in memory — we'll base64 encode into the DB so it survives Railway redeploys
+const uploadDir = path_m.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+// In-memory binary store — survives requests within the same instance
+const _binaryStore = new Map(); // appId -> Buffer
+
+// On startup, reload any binaries already on disk (survives process restarts within same deploy)
+try {
+  for (const f of fs.readdirSync(uploadDir)) {
+    if (f.endsWith('.exe')) {
+      const id = f.replace(/^app_/, '').replace(/\.exe$/, '');
+      _binaryStore.set(id, fs.readFileSync(path_m.join(uploadDir, f)));
+      console.log(`[update] Loaded binary for ${id} from disk (${(_binaryStore.get(id).length/1024).toFixed(0)} KB)`);
+    }
+  }
+} catch(e) { console.error('[update] startup load error:', e.message); }
+
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 200 * 1024 * 1024 } });
 
 // Admin uploads a new binary + sets version/status
@@ -941,27 +958,36 @@ app.post('/api/admin/apps/set-update/:id', adminAuth, upload.single('binary'), a
   if (latestVersion !== undefined) a.latestVersion = latestVersion;
   if (appStatus     !== undefined) a.appStatus     = appStatus;
   if (req.file) {
-    // Store binary as base64 in the DB — survives redeploys, no disk needed
-    a.binaryB64   = req.file.buffer.toString('base64');
-    a.binarySize  = req.file.size;
+    const id = req.params.id;
+    // Store in memory
+    _binaryStore.set(id, req.file.buffer);
+    // Also persist to disk so it survives process restarts within the same deploy
+    try { fs.writeFileSync(path_m.join(uploadDir, `app_${id}.exe`), req.file.buffer); } catch(e) { console.error('[update] disk write error:', e.message); }
     const proto   = req.headers['x-forwarded-proto'] || req.protocol;
     const host    = req.headers['x-forwarded-host']  || req.get('host');
-    a.downloadUrl = `${proto}://${host}/api/app/download/${req.params.id}`;
+    a.downloadUrl = `${proto}://${host}/api/app/download/${id}`;
     a.hasUpload   = true;
+    a.binarySize  = req.file.size;
+    console.log(`[update] Binary stored for ${id}: ${(req.file.size/1024).toFixed(0)} KB`);
   }
   await saveDB(db);
   return res.json({ success: true, message: req.file ? `Binary uploaded (${(req.file.size/1024).toFixed(0)} KB) and saved.` : 'Update info saved.', app: a });
 });
 
-// Public — serves the stored binary decoded from base64 in DB
-app.get('/api/app/download/:id', async (req, res) => {
-  const db = await loadDB(); const a = db.applications[req.params.id];
-  if (!a || !a.binaryB64) return res.status(404).json({ success: false, message: 'No binary uploaded for this app.' });
-  const buf = Buffer.from(a.binaryB64, 'base64');
+// Public — serves the stored binary from memory/disk
+app.get('/api/app/download/:id', (req, res) => {
+  const id  = req.params.id;
+  let   buf = _binaryStore.get(id);
+  // Fallback: try disk if not in memory (e.g. after process restart)
+  if (!buf) {
+    const fp = path_m.join(uploadDir, `app_${id}.exe`);
+    if (fs.existsSync(fp)) { buf = fs.readFileSync(fp); _binaryStore.set(id, buf); }
+  }
+  if (!buf) return res.status(404).json({ success: false, message: 'No binary uploaded for this app.' });
   res.setHeader('Content-Type', 'application/octet-stream');
-  res.setHeader('Content-Disposition', `attachment; filename="loader_update.exe"`);
+  res.setHeader('Content-Disposition', 'attachment; filename="loader_update.exe"');
   res.setHeader('Content-Length', buf.length);
-  res.send(buf);
+  res.end(buf);
 });
 
 // Public endpoint — C++ client calls this to check for updates
