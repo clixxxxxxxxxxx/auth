@@ -879,11 +879,6 @@ app.post('/api/link-license', authLimiter, async (req, res) => {
   if (isExpired(lic))             return res.json({ success: false, message: 'License key has expired.' });
   if (lic.discordId)              return res.json({ success: false, message: 'This license key is already linked to a Discord account.' });
 
-  // Check if this Discord account already has a key linked
-  const alreadyLinked = Object.values(db.licenses).find(l => l.discordId === session.user.id);
-  if (alreadyLinked)
-    return res.json({ success: false, message: 'Your Discord account is already linked to a license key.' });
-
   lic.discordId       = session.user.id;
   lic.discordUsername = session.user.username;
   lic.discordAvatar   = session.user.avatar;
@@ -917,5 +912,14 @@ app.post('/api/link-license', authLimiter, async (req, res) => {
     data: { username: lic.username, plan: lic.plan || 'standard', expiresAt: lic.expiresAt || null }
   });
 });
+
+// ─────────────────────────────────────────────
+//  SERVE FRONTEND
+// ─────────────────────────────────────────────
+const path = require('path');
+app.use(express.static(path.join(__dirname, '../frontend')));
+// fallback: any unknown GET serves index.html (for direct URL access)
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
+app.get('/link', (req, res) => res.sendFile(path.join(__dirname, '../frontend/link.html')));
 
 app.listen(CONFIG.PORT, '0.0.0.0', () => console.log(`[VaultAuth] v2.4 on port ${CONFIG.PORT}`));
