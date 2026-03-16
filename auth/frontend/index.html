@@ -888,37 +888,74 @@ function showUpdateManager(id) {
   if (!a) return;
   document.getElementById('modal-title').textContent = `Update Manager — ${a.name}`;
   document.getElementById('modal-body').innerHTML = `
-    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Set the latest version and download URL. The C++ loader will auto-detect when it's outdated and replace itself.</p>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Upload a new <code style="color:var(--accent2)">.exe</code> and set the version. The backend self-hosts the file — no external links needed.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
       <div class="field"><label>Latest Version</label><input type="text" id="upd-version" value="${a.latestVersion||''}" placeholder="e.g. 1.2.0"/></div>
       <div class="field"><label>App Status</label>
         <select id="upd-status">
-          <option value="active"       ${(a.appStatus||'active')==='active'       ?'selected':''}>Active</option>
-          <option value="maintenance"  ${(a.appStatus||'')==='maintenance'        ?'selected':''}>Maintenance</option>
-          <option value="disabled"     ${(a.appStatus||'')==='disabled'           ?'selected':''}>Disabled</option>
+          <option value="active"      ${(a.appStatus||'active')==='active'      ?'selected':''}>Active</option>
+          <option value="maintenance" ${(a.appStatus||'')==='maintenance'       ?'selected':''}>Maintenance</option>
+          <option value="disabled"    ${(a.appStatus||'')==='disabled'          ?'selected':''}>Disabled</option>
         </select>
       </div>
-      <div class="field" style="grid-column:1/-1"><label>Download URL (direct link to new .exe)</label><input type="text" id="upd-url" value="${a.downloadUrl||''}" placeholder="https://example.com/loader.exe"/></div>
     </div>
-    <div style="background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:10px;padding:14px;margin-top:8px;font-size:11px;color:var(--muted);line-height:1.7">
-      <strong style="color:var(--success)">How it works:</strong><br>
-      When the C++ loader calls <code style="color:var(--accent2)">verify()</code>, it compares its built-in version against <em>Latest Version</em>.<br>
-      If outdated → MessageBox appears → loader downloads the new exe, launches it, deletes itself.
+    <div class="field">
+      <label>Upload New Binary (.exe)</label>
+      <div id="upd-dropzone" onclick="document.getElementById('upd-file').click()" style="border:2px dashed var(--border);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:border-color 0.2s;background:var(--bg)">
+        <div style="font-size:24px;margin-bottom:6px">📦</div>
+        <div id="upd-drop-label" style="font-size:12px;color:var(--muted)">${a.hasUpload?'Binary already uploaded — drop a new one to replace':'Drop .exe here or click to browse'}</div>
+      </div>
+      <input type="file" id="upd-file" accept=".exe" style="display:none" onchange="onUpdFileChange(this)"/>
+    </div>
+    ${a.hasUpload?`<div style="font-size:11px;color:var(--success);margin-top:-4px;margin-bottom:8px">✓ Binary hosted at: <code style="color:var(--accent2)">${SERVER_URL}/api/app/download/${a.id}</code></div>`:''}
+    <div style="background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:10px;padding:12px;font-size:11px;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--success)">How it works:</strong> Upload your new loader .exe here. When a user's C++ loader calls <code style="color:var(--accent2)">verify()</code>, it compares its version against <em>Latest Version</em>. If outdated → MessageBox → downloads from your backend → replaces itself.
     </div>`;
   document.getElementById('modal-actions').innerHTML = `
-    <button class="btn btn-primary btn-sm" onclick="saveUpdateInfo('${id}')">Save Update Info</button>
+    <button class="btn btn-primary btn-sm" id="upd-save-btn" onclick="saveUpdateInfo('${id}')">Save</button>
     <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>`;
+  // drag-and-drop
+  const dz = document.getElementById('upd-dropzone');
+  dz.addEventListener('dragover', e=>{e.preventDefault();dz.style.borderColor='var(--accent)';});
+  dz.addEventListener('dragleave', ()=>dz.style.borderColor='var(--border)');
+  dz.addEventListener('drop', e=>{e.preventDefault();dz.style.borderColor='var(--border)';const f=e.dataTransfer.files[0];if(f){document.getElementById('upd-file').files=e.dataTransfer.files;onUpdFileChange({files:[f]});}});
   document.getElementById('detail-modal').classList.add('show');
 }
 
+function onUpdFileChange(input) {
+  const f = input.files[0];
+  if (!f) return;
+  document.getElementById('upd-drop-label').textContent = `✓ ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)`;
+  document.getElementById('upd-drop-label').style.color = 'var(--success)';
+  document.getElementById('upd-dropzone').style.borderColor = 'var(--success)';
+}
+
 async function saveUpdateInfo(id) {
-  const d = await api('POST',`/api/admin/apps/set-update/${id}`,{
-    latestVersion: document.getElementById('upd-version').value.trim(),
-    downloadUrl:   document.getElementById('upd-url').value.trim(),
-    appStatus:     document.getElementById('upd-status').value,
-  });
-  toast(d.message, d.success?'success':'error');
-  if (d.success) { closeModal(); loadApps(); }
+  const version  = document.getElementById('upd-version').value.trim();
+  const status   = document.getElementById('upd-status').value;
+  const fileInput= document.getElementById('upd-file');
+  const file     = fileInput.files[0];
+
+  const btn = document.getElementById('upd-save-btn');
+  btn.textContent = file ? 'Uploading...' : 'Saving...';
+  btn.disabled = true;
+
+  const form = new FormData();
+  form.append('latestVersion', version);
+  form.append('appStatus', status);
+  if (file) form.append('binary', file);
+
+  try {
+    const r = await fetch(`${SERVER_URL}/api/admin/apps/set-update/${id}`, {
+      method: 'POST',
+      headers: { 'x-admin-secret': ADMIN_SECRET },
+      body: form,
+    });
+    const d = await r.json();
+    toast(d.message, d.success?'success':'error');
+    if (d.success) { closeModal(); loadApps(); }
+  } catch(e) { toast('Upload failed: ' + e.message, 'error'); }
+  btn.textContent = 'Save'; btn.disabled = false;
 }
 
 loadRecent();
