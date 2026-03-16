@@ -948,7 +948,9 @@ app.post('/api/admin/apps/set-update/:id', adminAuth, upload.single('binary'), a
   if (appStatus     !== undefined) a.appStatus     = appStatus;
   // If a file was uploaded, set the download URL to our self-hosted endpoint
   if (req.file) {
-    a.downloadUrl = `${req.protocol}://${req.get('host')}/api/app/download/${req.params.id}`;
+    const proto = req.headers['x-forwarded-proto'] || req.protocol;
+    const host  = req.headers['x-forwarded-host']  || req.get('host');
+    a.downloadUrl = `${proto}://${host}/api/app/download/${req.params.id}`;
     a.hasUpload   = true;
   }
   await saveDB(db);
