@@ -12,6 +12,7 @@ const cors      = require('cors');
 const rateLimit = require('express-rate-limit');
 
 const app = express();
+app.set('trust proxy', 1); // Railway sits behind a proxy — needed for rate-limit + correct IPs
 app.use(express.json());
 app.use(cors({ origin: '*', methods: ['GET', 'POST', 'DELETE'] }));
 
@@ -959,16 +960,16 @@ app.post('/api/admin/apps/set-update/:id', adminAuth, upload.single('binary'), a
   if (appStatus     !== undefined) a.appStatus     = appStatus;
   if (req.file) {
     const id = req.params.id;
-    // Store in memory
     _binaryStore.set(id, req.file.buffer);
-    // Also persist to disk so it survives process restarts within the same deploy
     try { fs.writeFileSync(path_m.join(uploadDir, `app_${id}.exe`), req.file.buffer); } catch(e) { console.error('[update] disk write error:', e.message); }
-    const proto   = req.headers['x-forwarded-proto'] || req.protocol;
-    const host    = req.headers['x-forwarded-host']  || req.get('host');
-    a.downloadUrl = `${proto}://${host}/api/app/download/${id}`;
+    // trust proxy is enabled so req.protocol and req.hostname are correct
+    const base = process.env.RAILWAY_PUBLIC_DOMAIN
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}`
+      : `${req.protocol}://${req.hostname}`;
+    a.downloadUrl = `${base}/api/app/download/${id}`;
     a.hasUpload   = true;
     a.binarySize  = req.file.size;
-    console.log(`[update] Binary stored for ${id}: ${(req.file.size/1024).toFixed(0)} KB`);
+    console.log(`[update] Binary stored for ${id}: ${(req.file.size/1024).toFixed(0)} KB — URL: ${a.downloadUrl}`);
   }
   await saveDB(db);
   return res.json({ success: true, message: req.file ? `Binary uploaded (${(req.file.size/1024).toFixed(0)} KB) and saved.` : 'Update info saved.', app: a });
