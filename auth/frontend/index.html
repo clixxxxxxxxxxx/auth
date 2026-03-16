@@ -600,8 +600,23 @@ function renderApps(list) {
           <div style="font-size:12px;color:${a.discordWebhook?'var(--success)':'var(--muted)'}">${a.discordWebhook?'✓ Set':'—'}</div>
         </div>
       </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0 0;padding:10px;background:var(--bg);border-radius:8px;border:1px solid var(--border);">
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Latest Ver</div>
+          <div style="font-size:12px;font-family:var(--mono);color:${a.latestVersion?'var(--accent2)':'var(--muted)'}">${a.latestVersion||'—'}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">App Status</div>
+          <div style="font-size:12px;color:${a.appStatus==='maintenance'?'var(--warn)':a.appStatus==='disabled'?'var(--danger)':'var(--success)'}">${a.appStatus||'active'}</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Download</div>
+          <div style="font-size:12px;color:${a.downloadUrl?'var(--success)':'var(--muted)'}">${a.downloadUrl?'✓ Set':'—'}</div>
+        </div>
+      </div>
       <div class="app-card-footer">
         <button class="btn btn-ghost btn-sm" onclick="showEditApp('${a.id}')">⚙ Settings</button>
+        <button class="btn btn-ghost btn-sm" onclick="showUpdateManager('${a.id}')">⬆ Update</button>
         <button class="btn btn-ghost btn-sm" onclick="regenSecret('${a.id}')">↺ Regen</button>
         <button class="btn ${a.disabled?'btn-success':'btn-warn'} btn-sm" onclick="toggleApp('${a.id}')">${a.disabled?'Enable':'Disable'}</button>
         <button class="btn btn-danger btn-sm" onclick="deleteApp('${a.id}')">Delete</button>
@@ -866,6 +881,45 @@ async function testWebhook(url) {
 
 function copyRegisterUrl(){const url=document.getElementById('register-url-display').value;navigator.clipboard.writeText(url).then(()=>toast('Link copied!','success'));}
 function toast(msg,type='info'){const t=document.getElementById('toast');const icons={success:'✓',error:'✕',info:'ℹ'};t.innerHTML=`<span>${icons[type]}</span> ${msg}`;t.className=`show ${type}`;setTimeout(()=>t.className='',3500);}
+
+// ── UPDATE MANAGER ────────────────────────────
+function showUpdateManager(id) {
+  const a = allApps.find(x=>x.id===id);
+  if (!a) return;
+  document.getElementById('modal-title').textContent = `Update Manager — ${a.name}`;
+  document.getElementById('modal-body').innerHTML = `
+    <p style="font-size:12px;color:var(--muted);margin-bottom:16px">Set the latest version and download URL. The C++ loader will auto-detect when it's outdated and replace itself.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="field"><label>Latest Version</label><input type="text" id="upd-version" value="${a.latestVersion||''}" placeholder="e.g. 1.2.0"/></div>
+      <div class="field"><label>App Status</label>
+        <select id="upd-status">
+          <option value="active"       ${(a.appStatus||'active')==='active'       ?'selected':''}>Active</option>
+          <option value="maintenance"  ${(a.appStatus||'')==='maintenance'        ?'selected':''}>Maintenance</option>
+          <option value="disabled"     ${(a.appStatus||'')==='disabled'           ?'selected':''}>Disabled</option>
+        </select>
+      </div>
+      <div class="field" style="grid-column:1/-1"><label>Download URL (direct link to new .exe)</label><input type="text" id="upd-url" value="${a.downloadUrl||''}" placeholder="https://example.com/loader.exe"/></div>
+    </div>
+    <div style="background:rgba(62,207,142,0.06);border:1px solid rgba(62,207,142,0.2);border-radius:10px;padding:14px;margin-top:8px;font-size:11px;color:var(--muted);line-height:1.7">
+      <strong style="color:var(--success)">How it works:</strong><br>
+      When the C++ loader calls <code style="color:var(--accent2)">verify()</code>, it compares its built-in version against <em>Latest Version</em>.<br>
+      If outdated → MessageBox appears → loader downloads the new exe, launches it, deletes itself.
+    </div>`;
+  document.getElementById('modal-actions').innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="saveUpdateInfo('${id}')">Save Update Info</button>
+    <button class="btn btn-ghost btn-sm" onclick="closeModal()">Cancel</button>`;
+  document.getElementById('detail-modal').classList.add('show');
+}
+
+async function saveUpdateInfo(id) {
+  const d = await api('POST',`/api/admin/apps/set-update/${id}`,{
+    latestVersion: document.getElementById('upd-version').value.trim(),
+    downloadUrl:   document.getElementById('upd-url').value.trim(),
+    appStatus:     document.getElementById('upd-status').value,
+  });
+  toast(d.message, d.success?'success':'error');
+  if (d.success) { closeModal(); loadApps(); }
+}
 
 loadRecent();
 </script>
