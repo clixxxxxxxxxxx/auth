@@ -927,15 +927,39 @@ app.get('/link', (req, res) => res.sendFile(path.join(__dirname, '../frontend/li
 // ─────────────────────────────────────────────
 //  ADMIN — APP UPDATE MANAGER
 // ─────────────────────────────────────────────
-app.post('/api/admin/apps/set-update/:id', adminAuth, async (req, res) => {
+const multer = require('multer');
+const fs     = require('fs');
+
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename:    (req, file, cb) => cb(null, `app_${req.params.id}.exe`),
+});
+const upload = multer({ storage, limits: { fileSize: 200 * 1024 * 1024 } }); // 200 MB max
+
+// Admin uploads a new binary + sets version/status
+app.post('/api/admin/apps/set-update/:id', adminAuth, upload.single('binary'), async (req, res) => {
   const db = await loadDB(); const a = db.applications[req.params.id];
   if (!a) return res.json({ success: false, message: 'App not found.' });
-  const { latestVersion, downloadUrl, appStatus } = req.body;
+  const { latestVersion, appStatus } = req.body;
   if (latestVersion !== undefined) a.latestVersion = latestVersion;
-  if (downloadUrl   !== undefined) a.downloadUrl   = downloadUrl;
   if (appStatus     !== undefined) a.appStatus     = appStatus;
+  // If a file was uploaded, set the download URL to our self-hosted endpoint
+  if (req.file) {
+    a.downloadUrl = `${req.protocol}://${req.get('host')}/api/app/download/${req.params.id}`;
+    a.hasUpload   = true;
+  }
   await saveDB(db);
-  return res.json({ success: true, message: 'Update info saved.', app: a });
+  return res.json({ success: true, message: req.file ? 'Binary uploaded and update info saved.' : 'Update info saved.', app: a });
+});
+
+// Public — serves the stored binary for a given app
+app.get('/api/app/download/:id', async (req, res) => {
+  const filePath = path.join(uploadDir, `app_${req.params.id}.exe`);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ success: false, message: 'No binary uploaded for this app.' });
+  res.download(filePath, `loader_${req.params.id}.exe`);
 });
 
 // Public endpoint — C++ client calls this to check for updates
