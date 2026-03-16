@@ -210,6 +210,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
     <div class="nav-section">Security</div>
     <div class="nav-item" onclick="showPage('bans')"><span class="icon">🚫</span> Ban Manager</div>
     <div class="nav-section">Tools</div>
+    <div class="nav-item" onclick="showPage('resellers')"><span class="icon">👥</span> Resellers</div>
     <div class="nav-item" onclick="showPage('register')"><span class="icon">📋</span> Registration Page</div>
     <div class="sidebar-bottom">
       <div class="server-url-badge" id="sidebar-url">Not connected</div>
@@ -367,6 +368,50 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       </div>
     </div>
 
+    <!-- RESELLERS -->
+    <div class="page" id="page-resellers">
+      <div class="page-header">
+        <div><div class="page-title">Resellers</div><div class="page-sub">Manage reseller accounts and credit balances</div></div>
+        <button class="btn btn-primary" onclick="showCreateReseller()">+ New Reseller</button>
+      </div>
+      <div class="panel" id="create-reseller-panel" style="display:none">
+        <div class="panel-header">Create Reseller Account</div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+            <div class="field"><label>Username</label><input type="text" id="rs-username" placeholder="reseller123"/></div>
+            <div class="field"><label>Password</label><input type="password" id="rs-password" placeholder="Strong password"/></div>
+            <div class="field"><label>Initial Credits ($)</label><input type="number" id="rs-credits" value="0" min="0" step="0.01"/></div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="btn btn-primary" onclick="createReseller()">Create</button>
+            <button class="btn btn-ghost" onclick="hideCreateReseller()">Cancel</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">Reseller Pricing Reference</div>
+        <div class="panel-body" style="padding:12px 24px">
+          <div style="display:flex;gap:24px;flex-wrap:wrap;font-size:12px;font-family:var(--mono)">
+            <span style="color:var(--muted)">1d <span style="color:var(--accent2)">$3.19</span></span>
+            <span style="color:var(--muted)">3d <span style="color:var(--accent2)">$5.59</span></span>
+            <span style="color:var(--muted)">7d <span style="color:var(--accent2)">$10.39</span></span>
+            <span style="color:var(--muted)">30d <span style="color:var(--accent2)">$23.99</span></span>
+            <span style="color:var(--muted)">Lifetime <span style="color:var(--accent2)">$39.99</span></span>
+            <span style="color:var(--muted);margin-left:8px;font-size:11px">(20% off retail)</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">All Resellers <button class="btn btn-ghost" style="font-size:11px" onclick="loadResellers()">↺ Refresh</button></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Username</th><th>Credits</th><th>Keys Generated</th><th>Created</th><th>Actions</th></tr></thead>
+            <tbody id="resellers-tbody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- REGISTER -->
     <div class="page" id="page-register">
       <div class="page-header"><div><div class="page-title">Registration Page</div><div class="page-sub">Share this URL with customers to link their license</div></div></div>
@@ -450,7 +495,7 @@ function showPage(id) {
   if (id==='dashboard') { loadStats(); loadRecent(); }
   if (id==='bans') loadBanLists();
   if (id==='apps') loadApps();
-  if (id==='generate') loadAppsIntoSelect();
+  if (id==='resellers') loadResellers();
 }
 
 // ── STATS ─────────────────────────────────────
@@ -956,6 +1001,73 @@ async function saveUpdateInfo(id) {
     if (d.success) { closeModal(); loadApps(); }
   } catch(e) { toast('Upload failed: ' + e.message, 'error'); }
   btn.textContent = 'Save'; btn.disabled = false;
+}
+
+// ── RESELLERS ─────────────────────────────────
+function showCreateReseller() { document.getElementById('create-reseller-panel').style.display='block'; }
+function hideCreateReseller() { document.getElementById('create-reseller-panel').style.display='none'; }
+
+async function loadResellers() {
+  const d = await api('GET', '/api/admin/resellers');
+  if (!d.success) return;
+  const tbody = document.getElementById('resellers-tbody');
+  if (!d.resellers.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No resellers yet</td></tr>';
+    return;
+  }
+  tbody.innerHTML = d.resellers.map(r => `
+    <tr>
+      <td style="font-weight:700">${r.username}</td>
+      <td style="color:var(--success);font-family:var(--mono)">$${r.credits.toFixed(2)}</td>
+      <td style="font-family:var(--mono)">${r.keysGenerated || 0}</td>
+      <td style="color:var(--muted)">${r.createdAt?.slice(0,10)||'—'}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-success btn-sm" onclick="adjustCredits('${r.id}','${r.username}',true)">+ Credits</button>
+          <button class="btn btn-warn btn-sm" onclick="adjustCredits('${r.id}','${r.username}',false)">- Credits</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetResellerPw('${r.id}','${r.username}')">Reset PW</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteReseller('${r.id}','${r.username}')">Delete</button>
+        </div>
+      </td>
+    </tr>`).join('');
+}
+
+async function createReseller() {
+  const username = document.getElementById('rs-username').value.trim();
+  const password = document.getElementById('rs-password').value.trim();
+  const credits  = parseFloat(document.getElementById('rs-credits').value) || 0;
+  if (!username || !password) { toast('Username and password required', 'error'); return; }
+  const d = await api('POST', '/api/admin/resellers/create', { username, password, credits });
+  if (!d.success) { toast(d.message, 'error'); return; }
+  toast(`Reseller "${username}" created`, 'success');
+  document.getElementById('rs-username').value = '';
+  document.getElementById('rs-password').value = '';
+  document.getElementById('rs-credits').value  = '0';
+  hideCreateReseller();
+  loadResellers();
+}
+
+async function adjustCredits(id, username, isAdd) {
+  const amt = parseFloat(prompt(`${isAdd ? 'Add' : 'Remove'} credits for ${username}:\nEnter amount (e.g. 50.00)`));
+  if (isNaN(amt) || amt <= 0) return;
+  const d = await api('POST', `/api/admin/resellers/credits/${id}`, { amount: isAdd ? amt : -amt });
+  if (!d.success) { toast(d.message, 'error'); return; }
+  toast(`Credits updated. New balance: $${d.credits.toFixed(2)}`, 'success');
+  loadResellers();
+}
+
+async function resetResellerPw(id, username) {
+  const pw = prompt(`New password for ${username}:`);
+  if (!pw) return;
+  const d = await api('POST', `/api/admin/resellers/reset-password/${id}`, { password: pw });
+  toast(d.message, d.success ? 'success' : 'error');
+}
+
+async function deleteReseller(id, username) {
+  if (!confirm(`Delete reseller "${username}"? This cannot be undone.`)) return;
+  const d = await api('DELETE', `/api/admin/resellers/${id}`);
+  toast(d.message, d.success ? 'success' : 'error');
+  if (d.success) loadResellers();
 }
 
 loadRecent();
