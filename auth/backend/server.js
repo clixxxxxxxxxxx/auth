@@ -921,9 +921,148 @@ app.post('/api/link-license', authLimiter, async (req, res) => {
 // ─────────────────────────────────────────────
 const path = require('path');
 app.use(express.static(path.join(__dirname, '../frontend')));
-// fallback: any unknown GET serves index.html (for direct URL access)
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
-app.get('/link', (req, res) => res.sendFile(path.join(__dirname, '../frontend/link.html')));
+app.get('/link',      (req, res) => res.sendFile(path.join(__dirname, '../frontend/link.html')));
+app.get('/resellers', (req, res) => res.sendFile(path.join(__dirname, '../frontend/reseller.html')));
+
+// ─────────────────────────────────────────────
+//  RESELLER SYSTEM
+// ─────────────────────────────────────────────
+const RESELLER_PRICES = { 1: 3.19, 3: 5.59, 7: 10.39, 30: 23.99, lifetime: 39.99 };
+
+function resellerAuth(req, res, next) {
+  const { resellerUsername, resellerPassword } = req.body;
+  if (!resellerUsername || !resellerPassword) return res.status(401).json({ success: false, message: 'Missing credentials.' });
+  // resolved in route handlers after DB load
+  req._resellerCreds = { username: resellerUsername, password: resellerPassword };
+  next();
+}
+
+// Admin — create reseller
+app.post('/api/admin/resellers/create', adminAuth, async (req, res) => {
+  const { username, password, credits = 0 } = req.body;
+  if (!username || !password) return res.json({ success: false, message: 'Username and password required.' });
+  const db = await loadDB();
+  if (!db.resellers) db.resellers = {};
+  const id = 'RS-' + crypto.randomBytes(4).toString('hex').toUpperCase();
+  if (Object.values(db.resellers).find(r => r.username === username))
+    return res.json({ success: false, message: 'Username already exists.' });
+  db.resellers[id] = { username, password, credits: parseFloat(credits) || 0, createdAt: nowISO(), keysGenerated: 0 };
+  await saveDB(db);
+  return res.json({ success: true, id, reseller: db.resellers[id] });
+});
+
+// Admin — list resellers
+app.get('/api/admin/resellers', adminAuth, async (req, res) => {
+  const db = await loadDB();
+  const list = Object.entries(db.resellers || {}).map(([id, r]) => ({ id, ...r }));
+  return res.json({ success: true, resellers: list });
+});
+
+// Admin — add/remove credits
+app.post('/api/admin/resellers/credits/:id', adminAuth, async (req, res) => {
+  const db = await loadDB();
+  if (!db.resellers?.[req.params.id]) return res.json({ success: false, message: 'Reseller not found.' });
+  const { amount } = req.body; // positive = add, negative = remove
+  db.resellers[req.params.id].credits = Math.max(0, (db.resellers[req.params.id].credits || 0) + parseFloat(amount));
+  await saveDB(db);
+  return res.json({ success: true, credits: db.resellers[req.params.id].credits });
+});
+
+// Admin — delete reseller
+app.delete('/api/admin/resellers/:id', adminAuth, async (req, res) => {
+  const db = await loadDB();
+  if (!db.resellers?.[req.params.id]) return res.json({ success: false, message: 'Not found.' });
+  delete db.resellers[req.params.id];
+  await saveDB(db);
+  return res.json({ success: true });
+});
+
+// Admin — reset reseller password
+app.post('/api/admin/resellers/reset-password/:id', adminAuth, async (req, res) => {
+  const db = await loadDB();
+  if (!db.resellers?.[req.params.id]) return res.json({ success: false, message: 'Not found.' });
+  const { password } = req.body;
+  if (!password) return res.json({ success: false, message: 'Password required.' });
+  db.resellers[req.params.id].password = password;
+  await saveDB(db);
+  return res.json({ success: true });
+});
+
+// Reseller — login
+app.post('/api/reseller/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) return res.status(400).json({ success: false, message: 'Missing credentials.' });
+  const db = await loadDB();
+  const entry = Object.entries(db.resellers || {}).find(([, r]) => r.username === username && r.password === password);
+  if (!entry) return res.json({ success: false, message: 'Invalid username or password.' });
+  const [id, r] = entry;
+  return res.json({ success: true, id, username: r.username, credits: r.credits, keysGenerated: r.keysGenerated || 0 });
+});
+
+// Reseller — get own info
+app.post('/api/reseller/me', async (req, res) => {
+  const { resellerId, resellerPassword } = req.body;
+  if (!resellerId || !resellerPassword) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+  const db = await loadDB();
+  const r  = db.resellers?.[resellerId];
+  if (!r || r.password !== resellerPassword) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+  return res.json({ success: true, id: resellerId, username: r.username, credits: r.credits, keysGenerated: r.keysGenerated || 0 });
+});
+
+// Reseller — generate key (deducts credits)
+app.post('/api/reseller/generate', async (req, res) => {
+  const { resellerId, resellerPassword, duration, appId, count = 1 } = req.body;
+  if (!resellerId || !resellerPassword) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+  const db = await loadDB();
+  const r  = db.resellers?.[resellerId];
+  if (!r || r.password !== resellerPassword) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+
+  // Validate duration
+  const durKey  = duration === 'lifetime' ? 'lifetime' : parseInt(duration);
+  const price   = RESELLER_PRICES[durKey];
+  if (price === undefined) return res.json({ success: false, message: 'Invalid duration. Valid: 1, 3, 7, 30, lifetime.' });
+
+  const qty     = Math.min(Math.max(parseInt(count) || 1, 1), 50);
+  const total   = parseFloat((price * qty).toFixed(2));
+
+  if (r.credits < total)
+    return res.json({ success: false, message: `Insufficient credits. Need $${total.toFixed(2)}, have $${r.credits.toFixed(2)}.` });
+
+  // Generate keys
+  const keys = [];
+  for (let i = 0; i < qty; i++) {
+    const key = generateKey('VYRON');
+    db.licenses[key] = {
+      plan: 'standard', createdAt: nowISO(),
+      expiresAt: durKey === 'lifetime' ? null : daysFromNow(durKey),
+      activatedAt: null, hwidHash: null, hwidRaw: null, username: null,
+      allowMultiple: false, note: `Reseller: ${r.username}`,
+      lastSeen: null, appVersion: null, ip: null, lastIP: null,
+      appId: appId || null, resellerGenerated: true, resellerId,
+    };
+    keys.push(key);
+  }
+
+  r.credits       = parseFloat((r.credits - total).toFixed(2));
+  r.keysGenerated = (r.keysGenerated || 0) + qty;
+  if (!db.resellerHistory) db.resellerHistory = {};
+  if (!db.resellerHistory[resellerId]) db.resellerHistory[resellerId] = [];
+  db.resellerHistory[resellerId].push({ keys, duration: durKey, total, qty, at: nowISO() });
+
+  await saveDB(db);
+  return res.json({ success: true, keys, creditsUsed: total, creditsRemaining: r.credits });
+});
+
+// Reseller — get own key history
+app.post('/api/reseller/history', async (req, res) => {
+  const { resellerId, resellerPassword } = req.body;
+  if (!resellerId || !resellerPassword) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+  const db = await loadDB();
+  const r  = db.resellers?.[resellerId];
+  if (!r || r.password !== resellerPassword) return res.status(401).json({ success: false, message: 'Unauthorized.' });
+  return res.json({ success: true, history: (db.resellerHistory?.[resellerId] || []).slice().reverse() });
+});
 
 // ─────────────────────────────────────────────
 //  ADMIN — APP UPDATE MANAGER
@@ -979,7 +1118,6 @@ app.post('/api/admin/apps/set-update/:id', adminAuth, upload.single('binary'), a
 app.get('/api/app/download/:id', (req, res) => {
   const id  = req.params.id;
   let   buf = _binaryStore.get(id);
-  // Fallback: try disk if not in memory (e.g. after process restart)
   if (!buf) {
     const fp = path_m.join(uploadDir, `app_${id}.exe`);
     if (fs.existsSync(fp)) { buf = fs.readFileSync(fp); _binaryStore.set(id, buf); }
@@ -989,6 +1127,27 @@ app.get('/api/app/download/:id', (req, res) => {
   res.setHeader('Content-Disposition', 'attachment; filename="loader_update.exe"');
   res.setHeader('Content-Length', buf.length);
   res.end(buf);
+});
+
+// Admin debug — check what's stored for an app
+app.get('/api/admin/apps/debug/:id', adminAuth, async (req, res) => {
+  const db  = await loadDB();
+  const a   = db.applications[req.params.id];
+  if (!a) return res.json({ success: false, message: 'App not found.' });
+  const inMemory = _binaryStore.has(req.params.id);
+  const diskPath = path_m.join(uploadDir, `app_${req.params.id}.exe`);
+  const onDisk   = fs.existsSync(diskPath);
+  return res.json({
+    success: true,
+    appName:       a.name,
+    latestVersion: a.latestVersion || null,
+    downloadUrl:   a.downloadUrl   || null,
+    hasUpload:     a.hasUpload     || false,
+    binarySize:    a.binarySize    || null,
+    inMemory,
+    onDisk,
+    diskPath: onDisk ? diskPath : null,
+  });
 });
 
 // Public endpoint — C++ client calls this to check for updates
