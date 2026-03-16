@@ -289,6 +289,9 @@ app.post('/api/verify', authLimiter, appAuth, async (req, res) => {
       appName: appCfg.name, sessionToken, sessionPayload,
       discordUsername: license.discordUsername || null,
       discordAvatar: license.discordAvatar || null,
+      latestVersion: appCfg.latestVersion || null,
+      downloadUrl:   appCfg.downloadUrl   || null,
+      appStatus:     appCfg.appStatus     || 'active',
     }
   });
 });
@@ -371,8 +374,7 @@ app.post('/api/admin/apps/update/:id', adminAuth, async (req, res) => {
   if (maxAuthAttempts  !== undefined) a.maxAuthAttempts   = parseInt(maxAuthAttempts) || 0;
   if (discordWebhook   !== undefined) a.discordWebhook    = discordWebhook;
   if (version          !== undefined) a.version           = version;
-  if (description      !== undefined) a.description       = description;
-  await saveDB(db);
+  if (description      !== undefined) a.description       = description;  await saveDB(db);
 
   // Notify new webhook that it's now the active receiver
   if (discordWebhook && discordWebhook !== prevWebhook) {
@@ -921,5 +923,33 @@ app.use(express.static(path.join(__dirname, '../frontend')));
 // fallback: any unknown GET serves index.html (for direct URL access)
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/index.html')));
 app.get('/link', (req, res) => res.sendFile(path.join(__dirname, '../frontend/link.html')));
+
+// ─────────────────────────────────────────────
+//  ADMIN — APP UPDATE MANAGER
+// ─────────────────────────────────────────────
+app.post('/api/admin/apps/set-update/:id', adminAuth, async (req, res) => {
+  const db = await loadDB(); const a = db.applications[req.params.id];
+  if (!a) return res.json({ success: false, message: 'App not found.' });
+  const { latestVersion, downloadUrl, appStatus } = req.body;
+  if (latestVersion !== undefined) a.latestVersion = latestVersion;
+  if (downloadUrl   !== undefined) a.downloadUrl   = downloadUrl;
+  if (appStatus     !== undefined) a.appStatus     = appStatus;
+  await saveDB(db);
+  return res.json({ success: true, message: 'Update info saved.', app: a });
+});
+
+// Public endpoint — C++ client calls this to check for updates
+app.get('/api/app/version', async (req, res) => {
+  const appId = req.query.appId || req.headers['x-app-id'];
+  if (!appId) return res.status(400).json({ success: false, message: 'Missing appId.' });
+  const db = await loadDB(); const a = db.applications[appId];
+  if (!a) return res.status(404).json({ success: false, message: 'App not found.' });
+  return res.json({
+    success: true,
+    latestVersion: a.latestVersion || null,
+    downloadUrl:   a.downloadUrl   || null,
+    appStatus:     a.appStatus     || 'active',
+  });
+});
 
 app.listen(CONFIG.PORT, '0.0.0.0', () => console.log(`[VaultAuth] v2.4 on port ${CONFIG.PORT}`));
